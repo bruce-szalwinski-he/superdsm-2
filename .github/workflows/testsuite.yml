@@ -41,5 +41,14 @@ jobs:
           activate-environment: superdsm
           environment-file: superdsm.yml
 
+      - name: Export the environment
+        run: 'conda env export | grep -v "^prefix: " > superdsm.yml'
+
+      - name: Save the environment as an artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: superdsm.yml
+          path: superdsm.yml
+
       - name: Run SuperDSM
         run: python -m "unittest"

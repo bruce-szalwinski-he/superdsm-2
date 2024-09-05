@@ -339,7 +339,7 @@ def _process_mask(object, g, max_distance, stdamp, fill_holes=False):
 
 def _compute_eccentricity(object):
     if object.fg_fragment.any():
-        return skimage.measure.regionprops(object.fg_fragment.astype('uint8'), coordinates='rc')[0].eccentricity
+        return skimage.measure.regionprops(object.fg_fragment.astype('uint8'))[0].eccentricity
     else:
         return 0
 

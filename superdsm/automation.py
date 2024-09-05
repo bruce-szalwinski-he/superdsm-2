@@ -1,6 +1,7 @@
 from .render import normalize_image
 
 import skimage
+import skimage.feature.blob
 import math
 import scipy.ndimage as ndi
 import numpy as np
