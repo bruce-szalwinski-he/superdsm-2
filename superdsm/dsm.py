@@ -259,18 +259,15 @@ class Energy:
     :param epsilon: Corresponds to the constant :math:`\\epsilon` which is used for the smooth approximation of the regularization term :math:`\\|\\xi\\|_1 \\approx \\mathbb 1^\\top_\\Omega \\sqrt{\\xi^2 + \\epsilon} - \\sqrt{\\epsilon} \\cdot \\#\\Omega` (see Supplemental Material 2 of :ref:`Kostrykin and Rohr, TPAMI 2023 <references>`).
     :param alpha: Governs the regularization of the deformations and corresponds to :math:`\\alpha` described in :ref:`pipeline_theory_cvxprog`. Increasing this value leads to a smoother segmentation result.
     :param smooth_matrix_factory: An object with a ``get`` method which yields the matrix :math:`\\tilde G_\\omega` for any image region :math:`\\omega` (represented as a binary mask and passed as a parameter).
-    :param sparsity_tol: Absolute values below this threshold will be treated as zeros for computation of the gradient.
-    :param hessian_sparsity_tol: Absolute values below this threshold will be treated as zeros for computation of the Hessian.
     """
 
-    def __init__(self, roi, epsilon, alpha, smooth_matrix_factory, sparsity_tol=0, hessian_sparsity_tol=0):
+    def __init__(self, roi, epsilon, alpha, smooth_matrix_factory):
         self.roi = roi
         self.p   = None
 
         self.smooth_mat = smooth_matrix_factory.get(roi.mask)
 
         self.x = self.roi.get_map()[:, roi.mask]
-        self.w = np.ones(roi.mask.sum(), 'uint8')
         self.y = roi.model[roi.mask]
 
         assert epsilon > 0, 'epsilon must be strictly positive'
@@ -278,12 +275,6 @@ class Energy:
 
         assert alpha >= 0, 'alpha must be positive'
         self.alpha = alpha
-
-        assert sparsity_tol >= 0, 'sparsity_tol must be positive'
-        self.sparsity_tol = sparsity_tol
-
-        assert hessian_sparsity_tol >= 0, 'hessian_sparsity_tol must be positive'
-        self.hessian_sparsity_tol = hessian_sparsity_tol
 
         # pre-compute common terms occuring in the computation of the derivatives
         self.q = _compute_polynomial_derivatives(self.x)
@@ -320,7 +311,7 @@ class Energy:
         phi = np.zeros_like(self.t)
         phi[ valid_h_mask] = np.log(1 + self.h[valid_h_mask])
         phi[~valid_h_mask] = -self.t[~valid_h_mask]
-        objective1 = np.inner(self.w.flat, phi.flat)
+        objective1 = phi.sum()
         if self.smooth_mat.shape[1] > 0:
             objective2  = self.alpha * self.term2.sum()
             objective2 -= self.alpha * sqrt(self.epsilon) * len(self.term2)
@@ -341,14 +332,22 @@ class Energy:
         params = DeformableShapeModel.get_model(params)
         self._update_maps(params)
         self._update_theta()
+
+        # Compute the gradient for the polynomial parameters.
         term1 = -self.y * self.theta
-        grad = np.asarray([term1 * q for q in self.q]) @ self.w
-        term1[abs(term1) < self.sparsity_tol] = 0
-        term1_sparse = coo_matrix(term1).transpose(copy=False)
+        grad = np.sum([term1 * q for q in self.q], axis=1)
+
+        # If deformations are activated, extend the gradient by the derivatives for the deformation parameters. 
         if self.smooth_mat.shape[1] > 0:
-            grad2  = (self.w.reshape(-1)[None, :] @ self.smooth_mat.multiply(term1_sparse)).reshape(-1)
+            term1_sparse = coo_matrix(term1).transpose(copy=False)
+
+            # The next line performs column-wise sumation, but when paraphrased as `self.smooth_mat.multiply(term1_sparse).sum(axis=0).reshape(-1)`,
+            # the test suite fails due to deviating results. This is probably due to some minor numerical differences.
+            grad2 = (np.ones((1, len(self.y))) @ self.smooth_mat.multiply(term1_sparse)).reshape(-1)
+
             grad2 += self.alpha * (params.ξ / self.term2)
-            grad   = np.concatenate([grad, grad2])
+            grad = np.concatenate([grad, grad2])
+
         return grad
     
     def hessian(self, params):
@@ -360,9 +359,8 @@ class Energy:
         self._update_maps(params)
         self._update_theta()
         kappa = self.theta - np.square(self.theta)
-        kappa[kappa < self.sparsity_tol] = 0
         pixelmask = (kappa != 0)
-        term4 = np.sqrt(kappa[pixelmask] * self.w[pixelmask])[None, :]
+        term4 = np.sqrt(kappa[pixelmask])[None, :]
         D1 = np.asarray([-self.y * qi for qi in self.q])[:, pixelmask] * term4
         D2 = self.smooth_mat[pixelmask].multiply(-self.y[pixelmask, None]).T.multiply(term4).tocsr()
         if self.smooth_mat.shape[1] > 0:
@@ -373,13 +371,6 @@ class Energy:
             assert np.allclose(0, g[g < 0])
             g[g < 0] = 0
             H += sparse_diag(np.concatenate([np.zeros(6), g]))
-            if self.hessian_sparsity_tol > 0:
-                H = H.tocoo()
-                H_mask = (np.abs(H.data) >= self.hessian_sparsity_tol)
-                H_mask = np.logical_or(H_mask, H.row == H.col)
-                H.data = H.data[H_mask]
-                H.row  = H.row [H_mask]
-                H.col  = H.col [H_mask]
         else:
             H = D1 @ D1.T
         return H
