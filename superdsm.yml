@@ -5,9 +5,8 @@ channels:
 - defaults
 dependencies:
 - blas=1.0=mkl
-- cvxopt=1.2.7
-- cvxpy=1.1.13
-- cvxpy-base=1.1.13
+- cvxopt>=1.2.7
+- cvxpy>=1.1.13
 - dill=0.3.2
 - imagecodecs=2022.8.8
 - imageio=2.34.0
