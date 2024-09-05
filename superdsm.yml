@@ -21,7 +21,7 @@ dependencies:
 - python_abi
 - pyyaml=6.0.1
 - scikit-image=0.18.1
-- scipy=1.6.3
+- scipy>=1.6.3
 - setuptools>=69.0.3
 - pip:
   - ray==2.9.2
