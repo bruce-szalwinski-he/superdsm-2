@@ -3,9 +3,6 @@ import math
 import numpy as np
 import repype.stage
 import scipy.ndimage as ndi
-import skimage.morphology as morph
-
-from .pipeline import Stage
 
 
 class Preprocessing(repype.stage.Stage):

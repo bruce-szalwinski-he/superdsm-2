@@ -18,7 +18,6 @@ from .objects import (
     Object,
     compute_objects,
 )
-from .pipeline import Stage
 
 DEFAULT_MAX_WORK_AMOUNT = 10 ** 6
 

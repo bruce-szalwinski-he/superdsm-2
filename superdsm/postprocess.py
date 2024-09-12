@@ -17,7 +17,6 @@ from .objects import (
     BaseObject,
     extract_foreground_fragment,
 )
-from .pipeline import Stage
 
 
 class Postprocessing(repype.stage.Stage):
