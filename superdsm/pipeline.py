@@ -67,7 +67,7 @@ class LoadInput(repype.stage.Stage):
     inputs = ['input_id']
     outputs = ['g_raw']
 
-    def process(input_id: InputID, pipeline: Pipeline, config: repype.config.Config, status: Optional[repype.status.Status] = None) -> Dict[str, Any]:
+    def process(self, input_id: InputID, pipeline: Pipeline, config: repype.config.Config, status: Optional[repype.status.Status] = None) -> Dict[str, Any]:
         img_filepath = pipeline.resolve('input', input_id)
         return dict(
             g_raw = superdsm.io.imread(img_filepath)

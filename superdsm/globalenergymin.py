@@ -142,7 +142,7 @@ class GlobalEnergyMinimization(repype.stage.Stage):
     inputs  = ['y', 'y_mask', 'atoms', 'adjacencies', 'dsm_cfg']
     outputs = ['y_img', 'cover', 'objects', 'performance']
 
-    def process(y, y_mask, atoms, adjacencies, dsm_cfg, pipeline, config, status=None, log_root_dir=None):
+    def process(self, y, y_mask, atoms, adjacencies, dsm_cfg, pipeline, config, status=None, log_root_dir=None):
         y_img             = Image.create_from_array(y, normalize=False, mask=y_mask)
         pruning           = config.get(          'pruning', 'exact')
         beta              = config.get(             'beta',  0)
@@ -177,7 +177,7 @@ class GlobalEnergyMinimization(repype.stage.Stage):
             'performance': performance,
         }
 
-    def configure(pipeline, input_id, *args, scale, diameter, **kwargs):
+    def configure(self, pipeline, input_id, *args, scale, diameter, **kwargs):
         return {
             'beta': (scale ** 2, 0.66),
             'max_seed_distance': (diameter, np.inf),

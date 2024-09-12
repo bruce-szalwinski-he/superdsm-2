@@ -123,7 +123,7 @@ class C2F_RegionAnalysis(repype.stage.Stage):
     inputs  = ['y', 'dsm_cfg']
     outputs = ['y_mask', 'atoms', 'adjacencies', 'seeds', 'clusters']
 
-    def process(y, dsm_cfg, pipeline, config, status=None):
+    def process(self, y, dsm_cfg, pipeline, config, status=None):
         seed_connectivity = config.get('seed_connectivity', 8)
         min_atom_radius = config.get('min_atom_radius', 15)
         max_atom_norm_energy = config.get('max_atom_norm_energy', 0.05)
@@ -187,7 +187,7 @@ class C2F_RegionAnalysis(repype.stage.Stage):
             'clusters': clusters
         }
 
-    def configure(pipeline, input_id, *args, radius, **kwargs):
+    def configure(self, pipeline, input_id, *args, radius, **kwargs):
         return {
             'min_atom_radius': (radius, 0.33, dict(type=int)),
         }

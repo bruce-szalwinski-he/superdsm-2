@@ -121,7 +121,7 @@ class Postprocessing(repype.stage.Stage):
     inputs  = ['cover', 'y_img', 'atoms', 'g_raw', 'dsm_cfg']
     outputs = ['postprocessed_objects']
 
-    def process(cover, y_img, atoms, g_raw, dsm_cfg, pipeline, config, status=None, log_root_dir=None):
+    def process(self, cover, y_img, atoms, g_raw, dsm_cfg, pipeline, config, status=None, log_root_dir=None):
         # simple post-processing
         max_norm_energy           = config.get(          'max_norm_energy',    0.2)
         discard_image_boundary    = config.get(   'discard_image_boundary',  False)
@@ -238,7 +238,7 @@ class Postprocessing(repype.stage.Stage):
             'postprocessed_objects': postprocessed_objects
         }
 
-    def configure(pipeline, input_id, *args, radius, **kwargs):
+    def configure(self, pipeline, input_id, *args, radius, **kwargs):
         return {
             'min_object_radius': (radius, 0.0),
             'max_object_radius': (radius, np.inf),

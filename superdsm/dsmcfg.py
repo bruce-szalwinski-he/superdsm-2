@@ -71,7 +71,7 @@ class DSM_Config(repype.stage.Stage):
     id = 'dsm'
     outputs = ['dsm_cfg']
 
-    def process(pipeline, config, status=None):
+    def process(self, pipeline, config, status=None):
         dsm_cfg = {
             key: config.get(key, DSM_CONFIG_DEFAULTS[key]) for key in DSM_CONFIG_DEFAULTS.keys()
         }
@@ -79,7 +79,7 @@ class DSM_Config(repype.stage.Stage):
             'dsm_cfg': dsm_cfg
         }
 
-    def configure(pipeline, input_id, *args, scale, **kwargs):
+    def configure(self, pipeline, input_id, *args, scale, **kwargs):
         return {
             'alpha': (scale ** 2, 0.0005),
             'smooth_amount':     (scale, 0.2, dict(type=int, min=4)),

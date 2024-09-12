@@ -32,7 +32,7 @@ class Preprocessing(repype.stage.Stage):
     inputs  = ['g_raw']
     outputs = ['y']
 
-    def process(g_raw, pipeline, config, status=None):
+    def process(self, g_raw, pipeline, config, status=None):
         sigma1 = config.get('sigma1', math.sqrt(2))
         sigma2 = config.get('sigma2', 40)
         offset_clip  = config.get('offset_clip', 3)
@@ -61,7 +61,7 @@ class Preprocessing(repype.stage.Stage):
             'y': y,
         }
 
-    def configure(pipeline, input_id, *args, scale, **kwargs):
+    def configure(self, pipeline, input_id, *args, scale, **kwargs):
         return {
             'sigma2': (scale, 1.0),
         }
