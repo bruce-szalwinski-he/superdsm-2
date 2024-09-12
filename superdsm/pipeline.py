@@ -44,7 +44,8 @@ class Pipeline(repype.pipeline.Pipeline):
             if img is None:
                 img_filepath = self.resolve('input', input_id)
                 img = superdsm.io.imread(img_filepath)
-            base_config['scale'] = _estimate_scale(img, num_radii=10, thresholds=[0.01])[0]
+            scale = _estimate_scale(img, num_radii=10, thresholds=[0.01])[0]
+            base_config['scale'] = scale
         radius = scale * math.sqrt(2)
         diameter = 2 * radius
         return super().configure(base_config, input_id, *args, scale=scale, radius=radius, diameter=diameter, **kwargs)
