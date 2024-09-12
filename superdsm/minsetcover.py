@@ -111,9 +111,9 @@ class MinSetCover:
         self. objects_by_cluster = {cluster: [atom for atom in atoms if adjacencies.get_cluster_label(_get_atom_label(atom)) == cluster] for cluster in adjacencies.cluster_labels}
         self.solution_by_cluster = {cluster: self.objects_by_cluster[cluster] for cluster in adjacencies.cluster_labels}
 
-    def _update_partial_solution(self, cluster_label, out):
+    def _update_partial_solution(self, cluster_label, status):
         objects = self.objects_by_cluster[cluster_label]
-        partial_solution = solve_minsetcover(objects, self.beta, out=out, **self.solve_minsetcover_kwargs)
+        partial_solution = solve_minsetcover(objects, self.beta, status=status, **self.solve_minsetcover_kwargs)
         self.solution_by_cluster[cluster_label] = partial_solution
 
     def get_atom(self, atom_label):
@@ -121,7 +121,7 @@ class MinSetCover:
          """
          return self.atoms[atom_label]
 
-    def update(self, new_objects, out=None):
+    def update(self, new_objects, status=None):
         """Adds new objects to the family of candidate sets :math:`\\mathscr S` and updates the solution.
 
         :param new_objects: An iterable of :py:class:`~.objects.Object` instances, each representing a set of atomic image regions.
@@ -134,7 +134,7 @@ class MinSetCover:
             invalidated_clusters.append(cluster_label)
             self.objects_by_cluster[cluster_label].append(new_object)
         for cluster_label in frozenset(invalidated_clusters):
-            self._update_partial_solution(cluster_label, out)
+            self._update_partial_solution(cluster_label, status)
 
     def get_cluster_costs(self, cluster_label):
         """Returns the value of the min-weight set-cover for the subset of candidate sets which correspond to a single region of possibly clustered objects.
