@@ -1,5 +1,8 @@
-import skimage.io, skimage.transform._warps
-import os, warnings
+import os
+import warnings
+
+import skimage.io
+import skimage.transform._warps
 
 
 def imsave(filepath, img, shape=None, antialias=False):

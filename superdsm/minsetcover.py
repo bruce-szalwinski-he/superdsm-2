@@ -1,4 +1,4 @@
-from .output import get_output
+import repype.status
 
 
 def _merge_minsetcover(objects, accepted_objects, beta):
@@ -21,12 +21,11 @@ def _merge_minsetcover(objects, accepted_objects, beta):
     return accepted_objects, replacements_count
 
 
-def _solve_minsetcover(objects, beta, merge=True, out=None):
+def _solve_minsetcover(objects, beta, merge=True, status=None):
     accepted_objects  = []  ## primal variable
     remaining_objects = list(objects)
     uncovered_atoms      = set.union(*[c.footprint for c in objects])
 
-    out = get_output(out)
     w = lambda c: c.energy + beta
     while len(remaining_objects) > 0:
 
@@ -41,11 +40,11 @@ def _solve_minsetcover(objects, beta, merge=True, out=None):
         uncovered_atoms -= best_object.footprint
         remaining_objects = [c for c in remaining_objects if len(c.footprint & uncovered_atoms) > 0]
 
-    out.write(f'MINSETCOVER - GREEDY accepted objects: {len(accepted_objects)}')
+    repype.status.update(status, f'MINSETCOVER - GREEDY accepted objects: {len(accepted_objects)}')
 
     if merge:
         accepted_objects, replacements_count = _merge_minsetcover(objects, accepted_objects, beta)
-        out.write(f'MINSETCOVER - MERGED objects: {replacements_count}')
+        repype.status.update(status, f'MINSETCOVER - MERGED objects: {replacements_count}')
 
     return accepted_objects
 
@@ -54,7 +53,7 @@ DEFAULT_MAX_ITER = 5
 DEFAULT_GAMMA    = 0.8
 
 
-def solve_minsetcover(objects, beta, merge=True, max_iter=DEFAULT_MAX_ITER, gamma=DEFAULT_GAMMA, out=None):
+def solve_minsetcover(objects, beta, merge=True, max_iter=DEFAULT_MAX_ITER, gamma=DEFAULT_GAMMA, status=None):
     """Computs an approximative min-weight set-cover.
 
     This function implements Algorithm 2 of :ref:`Kostrykin and Rohr (TPAMI 2023) <references>`.
@@ -69,16 +68,15 @@ def solve_minsetcover(objects, beta, merge=True, max_iter=DEFAULT_MAX_ITER, gamm
     """
     assert beta >= 0
     assert 0 < gamma < 1
-    out = get_output(out)
-    solution1 = _solve_minsetcover(objects, beta, merge, out)
+    solution1 = _solve_minsetcover(objects, beta, merge, status)
     if max_iter > 1 and beta > 0:
         new_beta = beta * gamma
-        out.write(f'MINSETCOVER retry with lower beta: {new_beta:g}')
-        solution2 = solve_minsetcover(objects, new_beta, merge, max_iter - 1, gamma, out)
+        repype.status.update(status, f'MINSETCOVER retry with lower beta: {new_beta:g}')
+        solution2 = solve_minsetcover(objects, new_beta, merge, max_iter - 1, gamma, status)
         solution1_value = sum(c.energy for c in solution1) + beta * len(solution1)
         solution2_value = sum(c.energy for c in solution2) + beta * len(solution2)
         if solution2_value < solution1_value:
-            out.write(f'MINSETCOVER solution for beta={beta:g} improved by {solution2_value - solution1_value:,g} (-{100 * (1 - solution2_value / solution1_value):.2f}%)')
+            repype.status.update(status, f'MINSETCOVER solution for beta={beta:g} improved by {solution2_value - solution1_value:,g} (-{100 * (1 - solution2_value / solution1_value):.2f}%)')
             return solution2
     return solution1
 

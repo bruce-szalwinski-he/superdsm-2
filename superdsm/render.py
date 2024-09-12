@@ -1,13 +1,15 @@
-from ._aux import render_objects_foregrounds
+import math
 
-import numpy as np
-import warnings, math
-
-from skimage import morphology, segmentation
-from scipy   import ndimage
-
-import skimage.draw
 import matplotlib.pyplot as plt
+import numpy as np
+import skimage.draw
+from scipy import ndimage
+from skimage import (
+    morphology,
+    segmentation,
+)
+
+from ._aux import render_objects_foregrounds
 
 
 def draw_line(p1, p2, thickness, shape):

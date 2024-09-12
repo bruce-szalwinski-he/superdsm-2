@@ -1,8 +1,9 @@
-import numpy as np
-import scipy.sparse
-import warnings
 import pathlib
+import warnings
+
+import numpy as np
 import ray
+import scipy.sparse
 
 
 def copy_dict(d):
@@ -58,7 +59,7 @@ def render_objects_foregrounds(shape, objects):
 
 try:
 
-    import posix_ipc
+    import posix_ipc  # type: ignore
 
     class SystemSemaphore:
         def __init__(self, name, limit):
