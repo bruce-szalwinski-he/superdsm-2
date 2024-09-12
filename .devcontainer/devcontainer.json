@@ -3,7 +3,10 @@
 {
 	"name": "Python 3",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "mcr.microsoft.com/devcontainers/python:0-3.8",
+	"image": "mcr.microsoft.com/devcontainers/python:0-3.11",
+	"containerEnv": {
+		"DOCKER_DEFAULT_PLATFORM": "linux/amd64"
+	},
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
@@ -18,7 +21,7 @@
 	"customizations": {
 		"vscode": {
 			"settings": {
-				"python.analysis.extraPaths": ["/home/vscode/.local/lib/python3.8/site-packages"]
+				"python.analysis.extraPaths": ["/home/vscode/.local/lib/python3.11/site-packages"]
 			}
 		}
 	}
