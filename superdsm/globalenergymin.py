@@ -1,14 +1,24 @@
-from .pipeline import Stage
-from ._aux import join_path, mkdir, copy_dict
-from .output import get_output, Text
-from .objects import compute_objects, Object
-from .minsetcover import MinSetCover, DEFAULT_MAX_ITER, DEFAULT_GAMMA
-from .maxsetpack import solve_maxsetpack
-from .image import Image
-
-import scipy.ndimage as ndi
 import numpy as np
+import repype.stage
+import scipy.ndimage as ndi
 
+from ._aux import (
+    copy_dict,
+    join_path,
+    mkdir,
+)
+from .image import Image
+from .maxsetpack import solve_maxsetpack
+from .minsetcover import (
+    DEFAULT_GAMMA,
+    DEFAULT_MAX_ITER,
+    MinSetCover,
+)
+from .objects import (
+    Object,
+    compute_objects,
+)
+from .pipeline import Stage
 
 DEFAULT_MAX_WORK_AMOUNT = 10 ** 6
 
@@ -94,7 +104,7 @@ class PerformanceReport:
         assert np.isnan(   self.overall_pruning_success) or (0 <= self.overall_pruning_success    <= 1), f'{self.   overall_computed_object_count} / {self.       overall_object_count}'
 
 
-class GlobalEnergyMinimization(Stage):
+class GlobalEnergyMinimization(repype.stage.Stage):
     """Implements the global energy minimization (see :ref:`pipeline_theory_jointsegandclustersplit`).
 
     This stage implements Algorithm 1 and Criterion 2 from :ref:`Kostrykin and Rohr (TPAMI 2023) <references>`. The stage requires ``y``, ``y_mask``, ``atoms``, ``adjacencies``, ``dsm_cfg`` for input and produces ``y_img``, ``cover``, ``objects``, ``performance`` for output. Refer to :ref:`pipeline_inputs_and_outputs` for more information on the available inputs and outputs.
@@ -129,28 +139,23 @@ class GlobalEnergyMinimization(Stage):
         Used to recognize a computationally intractable amount of objects due to misconfigured hyperparameters. If the number of objects *could* exceed this threshold, a ``ValueError`` is raised. The number of objects is estimated based on the structure of the adjacency graph of the atomic image regions (see :ref:`pipeline_theory_c2freganal`). Defaults to 10e6.
     """
 
-    ENABLED_BY_DEFAULT = True
+    id = 'global-energy-minimization'
+    inputs  = ['y', 'y_mask', 'atoms', 'adjacencies', 'dsm_cfg']
+    outputs = ['y_img', 'cover', 'objects', 'performance']
 
-    def __init__(self):
-        super(GlobalEnergyMinimization, self).__init__('global-energy-minimization',
-                                                       inputs  = ['y', 'y_mask', 'atoms', 'adjacencies', 'dsm_cfg'],
-                                                       outputs = ['y_img', 'cover', 'objects', 'performance'])
-
-    def process(self, input_data, cfg, out, log_root_dir):
-        y_img             = Image.create_from_array(input_data['y'], normalize=False, mask=input_data['y_mask'])
-        atoms             = input_data['atoms']
-        adjacencies       = input_data['adjacencies']
-        pruning           = cfg.get(          'pruning', 'exact')
-        beta              = cfg.get(             'beta',  0)
-        max_iter          = cfg.get(         'max_iter',  DEFAULT_MAX_ITER)
-        gamma             = cfg.get(            'gamma',  DEFAULT_GAMMA)
-        max_seed_distance = cfg.get('max_seed_distance',  np.inf)
-        max_work_amount   = cfg.get(  'max_work_amount',  DEFAULT_MAX_WORK_AMOUNT)
+    def process(y, y_mask, atoms, adjacencies, dsm_cfg, pipeline, config, status=None, log_root_dir=None):
+        y_img             = Image.create_from_array(y, normalize=False, mask=y_mask)
+        pruning           = config.get(          'pruning', 'exact')
+        beta              = config.get(             'beta',  0)
+        max_iter          = config.get(         'max_iter',  DEFAULT_MAX_ITER)
+        gamma             = config.get(            'gamma',  DEFAULT_GAMMA)
+        max_seed_distance = config.get('max_seed_distance',  np.inf)
+        max_work_amount   = config.get(  'max_work_amount',  DEFAULT_MAX_WORK_AMOUNT)
 
         assert 0 < gamma < 1
         assert pruning in ('exact', 'isbi24')
 
-        dsm_cfg = copy_dict(input_data['dsm_cfg'])
+        dsm_cfg = copy_dict(dsm_cfg)
         cover, objects, performance = _compute_generations(
             adjacencies,
             y_img,
@@ -163,7 +168,7 @@ class GlobalEnergyMinimization(Stage):
             gamma,
             max_seed_distance,
             max_work_amount,
-            out,
+            status,
         )[2:]
 
         return {
@@ -173,30 +178,28 @@ class GlobalEnergyMinimization(Stage):
             'performance': performance,
         }
 
-    def configure_ex(self, scale, radius, diameter):
+    def configure(pipeline, input_id, *args, scale, diameter, **kwargs):
         return {
             'beta': (scale ** 2, 0.66),
             'max_seed_distance': (diameter, np.inf),
         }
 
 
-def _compute_generations(adjacencies, y_img, atoms_map, log_root_dir, pruning, dsm_cfg, beta=np.nan, max_iter=DEFAULT_MAX_ITER, gamma=DEFAULT_GAMMA, max_seed_distance=np.inf, max_work_amount=DEFAULT_MAX_WORK_AMOUNT, out=None):
-    out = get_output(out)
-
+def _compute_generations(adjacencies, y_img, atoms_map, log_root_dir, pruning, dsm_cfg, beta=np.nan, max_iter=DEFAULT_MAX_ITER, gamma=DEFAULT_GAMMA, max_seed_distance=np.inf, max_work_amount=DEFAULT_MAX_WORK_AMOUNT, status=None):
     atoms = []
     for atom_label in adjacencies.atom_labels:
         c = Object()
         c.footprint = {atom_label}
         atoms.append(c)
-    out.write(f'\nIteration 1:')
-    compute_objects(atoms, y_img, atoms_map, dsm_cfg, _get_generation_log_dir(log_root_dir, 1), out=out)
+    repype.status.update(status, f'\nIteration 1:')
+    compute_objects(atoms, y_img, atoms_map, dsm_cfg, _get_generation_log_dir(log_root_dir, 1), status=status)
 
     universes = []
     for cluster_label in adjacencies.cluster_labels:
         universe = Object()
         universe.footprint = adjacencies.get_atoms_in_cluster(cluster_label)
         universes.append(universe)
-    compute_objects(universes, y_img, atoms_map, dsm_cfg, _get_generation_log_dir(log_root_dir, 0), ('Computing universe costs', 'Universe costs computed'), out=out)
+    compute_objects(universes, y_img, atoms_map, dsm_cfg, _get_generation_log_dir(log_root_dir, 0), ('Computing universe costs', 'Universe costs computed'), status=status)
     directly_solved_cluster_labels = set() ## solved using closed-form solution
     trivial_cluster_labels         = set() ## universe cardinality 1 or 2
     for cluster_label, universe in zip(adjacencies.cluster_labels, universes):
@@ -208,10 +211,10 @@ def _compute_generations(adjacencies, y_img, atoms_map, log_root_dir, pruning, d
             directly_solved_cluster_labels |= {cluster_label}
 
     cover = MinSetCover(atoms, beta, adjacencies, max_iter=max_iter, gamma=gamma)
-    cover.update(universes, out.derive(muted=True))
+    cover.update(universes, status=None)
     costs = [cover.costs]
-    out.write(f'Solution costs: {costs[-1]:,g}')
-    out.write(f'Clusters solved directly: {len(directly_solved_cluster_labels)} / {len(adjacencies.cluster_labels)}')
+    repype.status.update(status, f'Solution costs: {costs[-1]:,g}')
+    repype.status.update(status, f'Clusters solved directly: {len(directly_solved_cluster_labels)} / {len(adjacencies.cluster_labels)}')
     performance = PerformanceReport(direct_solution_trial_count=len(adjacencies.cluster_labels), direct_solution_success_count=len(directly_solved_cluster_labels))
     
     __estimate_progress = lambda **kwargs: _estimate_progress(generations, adjacencies, max_seed_distance, max_amount=max_work_amount, skip_last=True, **kwargs)
@@ -228,15 +231,15 @@ def _compute_generations(adjacencies, y_img, atoms_map, log_root_dir, pruning, d
         while True:
             generation_number = 1 + len(generations)
             generation_label  = f'Iteration {generation_number}'
-            out.write('')
-            out.intermediate(f'{generation_label}...')
+            repype.status.update(status, '')
+            repype.status.update(status, f'{generation_label}...', intermediate=True)
 
             finished_amount, remaining_amount = __estimate_progress(ignored_cluster_labels=directly_solved_cluster_labels)
             if np.isnan(finished_amount) or np.isnan(remaining_amount): progress_text = 'progress unknown'
             else:
                 progress = finished_amount / (remaining_amount + finished_amount)
                 progress_text = f'(finished {100 * progress:.0f}% or more)'
-            out.write(f'{generation_label}: {Text.style(progress_text, Text.BOLD)}')
+            repype.status.update(status, f'{generation_label}: {progress_text}')
             
             new_generation, new_objects = _process_generation(
                 cover,
@@ -250,7 +253,7 @@ def _compute_generations(adjacencies, y_img, atoms_map, log_root_dir, pruning, d
                 _get_generation_log_dir(log_root_dir, generation_number),
                 pruning,
                 directly_solved_cluster_labels,
-                out,
+                status,
             )
             objects += new_objects
             performance.iterative_computed_object_count += len(new_objects)
@@ -258,16 +261,16 @@ def _compute_generations(adjacencies, y_img, atoms_map, log_root_dir, pruning, d
             if len(new_generation) == 0: break
             generations.append(new_generation)
 
-            cover.update(new_generation, out.derive(muted=True))
+            cover.update(new_generation, status=None)
             costs.append(cover.costs)
-            out.write(f'Solution costs: {costs[-1]:,g}')
+            repype.status.update(status, f'Solution costs: {costs[-1]:,g}')
 
     performance.nontrivial_computed_object_count += performance.iterative_computed_object_count
     performance.   overall_computed_object_count += performance.iterative_computed_object_count
     performance._assert_integrity()
 
-    out.write('')
-    out.write(f'Non-trivial pruning: {100 * performance.nontrivial_pruning_success:.1f}% (computed {performance.nontrivial_computed_object_count} / {performance.nontrivial_object_count})')
+    repype.status.update(status, '')
+    repype.status.update(status, f'Non-trivial pruning: {100 * performance.nontrivial_pruning_success:.1f}% (computed {performance.nontrivial_computed_object_count} / {performance.nontrivial_object_count})')
     return generations, costs, cover, objects, performance
 
 
@@ -323,7 +326,7 @@ def _estimate_progress(generations, adjacencies, max_seed_distance, max_amount=D
     return finished_amount, remaining_amount
 
 
-def _process_generation(cover, objects, previous_generation, y, atoms_map, adjacencies, dsm_cfg, max_seed_distance, log_root_dir, pruning, ignored_cluster_labels, out):
+def _process_generation(cover, objects, previous_generation, y, atoms_map, adjacencies, dsm_cfg, max_seed_distance, log_root_dir, pruning, ignored_cluster_labels, status):
     new_objects = []
     new_objects_energy_thresholds = []
     discarded = 0
@@ -340,7 +343,7 @@ def _process_generation(cover, objects, previous_generation, y, atoms_map, adjac
         if pruning == 'exact':
             remaining_atoms = adjacencies.get_atoms_in_cluster(cluster_label) - new_object_footprint
             min_remaining_atom_costs = sum(cover.get_atom(atom_label).energy for atom_label in remaining_atoms)
-            new_object_maxsetpack = sum(c.energy for c in solve_maxsetpack([c for c in objects if c.is_optimal and c.footprint.issubset(new_object.footprint)], out=out.derive(muted=True)))
+            new_object_maxsetpack = sum(c.energy for c in solve_maxsetpack([c for c in objects if c.is_optimal and c.footprint.issubset(new_object.footprint)], status=None))
             min_new_object_costs = cover.beta + max((object.energy + cover.get_atom(new_atom_label).energy, new_object_maxsetpack))
             max_new_object_costs = current_cluster_costs - min_remaining_atom_costs
             if max_new_object_costs < min_new_object_costs:
@@ -354,7 +357,7 @@ def _process_generation(cover, objects, previous_generation, y, atoms_map, adjac
         else:
             raise ValueError(f'Unknown pruning mode "{pruning}"')
 
-    compute_objects(new_objects, y, atoms_map, dsm_cfg, log_root_dir, out=out)
+    compute_objects(new_objects, y, atoms_map, dsm_cfg, log_root_dir, status=status)
 
     next_generation = []
     for new_object_idx, new_object in enumerate(new_objects):
@@ -364,5 +367,5 @@ def _process_generation(cover, objects, previous_generation, y, atoms_map, adjac
             discarded += 1
             new_object.fg_fragment = None ## save memory, we will only only need the footprint and the energy of the object
         new_object.cidx = new_object_idx ## for debugging purposes
-    out.write(f'Next iteration: {len(next_generation)} ({discarded} discarded, {pruning} pruning)')
+    repype.status.update(status, f'Next iteration: {len(next_generation)} ({discarded} discarded, {pruning} pruning)')
     return next_generation, new_objects
