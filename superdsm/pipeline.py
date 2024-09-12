@@ -38,15 +38,27 @@ class Pipeline(repype.pipeline.Pipeline):
             Postprocessing(),
         ]
 
-    def configure(self, base_config: repype.config.Config, input_id: InputID, *args, **kwargs):
+    def configure(self, base_config: repype.config.Config, input_id: InputID, *args, img=None, **kwargs):
         scale = base_config.get('scale', None)
         if scale is None:
-            img_filepath = self.resolve('input', input_id)
-            img = superdsm.io.imread(img_filepath)
+            if img is None:
+                img_filepath = self.resolve('input', input_id)
+                img = superdsm.io.imread(img_filepath)
             base_config['scale'] = _estimate_scale(img, num_radii=10, thresholds=[0.01])[0]
         radius = scale * math.sqrt(2)
         diameter = 2 * radius
         return super().configure(base_config, input_id, *args, scale=scale, radius=radius, diameter=diameter, **kwargs)
+    
+    def process_image(self, g_raw, base_config, status=None):
+        assert g_raw is not None
+        config = self.configure(base_config, img=g_raw, input_id=None)
+        return self.process(
+            input_id=None,
+            config=config,
+            first_stage='preprocess',
+            data=dict(g_raw = g_raw),
+            status=status,
+        )
     
 
 class LoadInput(repype.stage.Stage):
