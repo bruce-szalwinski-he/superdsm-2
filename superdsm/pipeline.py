@@ -1,266 +1,118 @@
-from ._aux import copy_dict, mkdir
-from .output import get_output
-from .image import normalize_image
-
 import math
+
 import numpy as np
-import time
+import repype.config
+import repype.pipeline
+import repype.status
+import scipy.ndimage as ndi
+import skimage
+import skimage.feature.blob
+from repype.typing import (
+    Any,
+    Dict,
+    InputID,
+    Optional,
+)
+
+import superdsm.io
+from superdsm.render import normalize_image
 
 
-class Stage(object):
-    """A pipeline stage.
+class Pipeline(repype.pipeline.Pipeline):
 
-    Each stage can be controlled by a separate set of hyperparameters. Refer to the documentation of the respective pipeline stages for details. Most hyperparameters reside in namespaces, which are uniquely associated with the corresponding pipeline stages.
-
-    :param name: Readable identifier of this stage.
-    :param cfgns: Hyperparameter namespace of this stage. Defaults to ``name`` if not specified.
-    :param inputs: List of inputs required by this stage.
-    :param outputs: List of outputs produced by this stage.
-
-    Automation
-    ^^^^^^^^^^
-
-    Hyperparameters can be set automatically using the :py:meth:`~.configure` method based on the scale :math:`\sigma` of objects in an image. Hyperparameters are only set automatically based on the scale of objects, if the :py:mod:`~superdsm.automation` module (as in :ref:`this <usage_example_interactive>` example) or batch processing are used (as in :ref:`this <usage_example_batch>` example). Hyperparameters are *not* set automatically if the :py:meth:`~superdsm.pipeline.Pipeline.process_image` method of the :py:class:`~superdsm.pipeline.Pipeline` class is used directly.
-
-    Inputs and outputs
-    ^^^^^^^^^^^^^^^^^^
-
-    Each stage must declare its required inputs and the outputs it produces. These are used by :py:meth:`~.create_pipeline` to automatically determine the stage order. The input ``g_raw`` is provided by the pipeline itself.
-    """
-
-    def __init__(self, name, cfgns=None, inputs=[], outputs=[]):
-        if cfgns is None: cfgns = name
-        self.name    = name
-        self.cfgns   = cfgns
-        self.inputs  = dict([(key, key) for key in  inputs])
-        self.outputs = dict([(key, key) for key in outputs])
-        self._callbacks = {}
-
-    def _callback(self, name, *args, **kwargs):
-        if name in self._callbacks:
-            for cb in self._callbacks[name]:
-                cb(name, *args, **kwargs)
-
-    def add_callback(self, name, cb):
-        if name not in self._callbacks: self._callbacks[name] = []
-        self._callbacks[name].append(cb)
-
-    def remove_callback(self, name, cb):
-        if name in self._callbacks: self._callbacks[name].remove(cb)
-
-    def __call__(self, data, cfg, out=None, log_root_dir=None):
-        out = get_output(out)
-        cfg = cfg.get(self.cfgns, {})
-        if cfg.get('enabled', self.ENABLED_BY_DEFAULT):
-            out.intermediate(f'Starting stage "{self.name}"')
-            self._callback('start', data)
-            input_data = {}
-            for data_key, input_data_key in self.inputs.items():
-                input_data[input_data_key] = data[data_key]
-            t0 = time.time()
-            output_data = self.process(input_data, cfg=cfg, out=out, log_root_dir=log_root_dir)
-            dt = time.time() - t0
-            assert len(set(output_data.keys()) ^ set(self.outputs)) == 0, 'stage "%s" generated unexpected output' % self.name
-            for output_data_key, data_key in self.outputs.items():
-                data[data_key] = output_data[output_data_key]
-            self._callback('end', data)
-            return dt
-        else:
-            out.write(f'Skipping disabled stage "{self.name}"')
-            self._callback('skip', data)
-            return 0
-
-    def process(self, input_data, cfg, out, log_root_dir):
-        """Runs this pipeline stage.
-
-        :param input_data: Dictionary of the inputs declared by this stage.
-        :param cfg: The hyperparameters to be used by this stage.
-        :param out: An instance of an :py:class:`~superdsm.output.Output` sub-class, ``'muted'`` if no output should be produced, or ``None`` if the default output should be used.
-        :param log_root_dir: Path of directory where log files will be written, or ``None`` if no log files should be written.
-        :return: Dictionary of the outputs declared by this stage.
-        """
-        raise NotImplementedError()
-
-    def configure(self, scale):
-        """Automatically computes the default configuration entries which are dependent on the scale of the objects in an image.
-
-        :param scale: The average scale of objects in the image.
-        :return: See :py:meth:`~.configure_ex`.
-        
-        The parameter ``scale`` corresponds to :math:`\sigma` in :ref:`Kostrykin and Rohr (TPAMI 2023) <references>`. Delegates to the :py:meth:`~.configure_ex` method, using :math:`\sqrt{2} \cdot \sigma` for ``radius`` and :math:`\sqrt{8} \cdot \sigma` for ``diameter``.
-
-        .. runblock:: pycon
-
-           >>> import superdsm.globalenergymin
-           >>> stage = superdsm.globalenergymin.GlobalEnergyMinimization()
-           >>> stage.configure(40)
-        """
-        radius   = scale * math.sqrt(2)
-        diameter = 2 * radius
-        return self.configure_ex(scale, radius, diameter)
-
-    def configure_ex(self, scale, radius, diameter):
-        """Automatically computes the default configuration entries which are dependent on the scale of the objects in an image, using explicit values for the expected radius and diameter of the objects.
-
-        :param scale: The average scale of objects in the image.
-        :param radius: The average radius of objects in the image.
-        :param diameter: The average diameter of objects in the image.
-        :return: Dictionary of configuration entries of the form:
-
-            .. code-block:: python
-
-               {
-                   'key': (factor, default_user_factor),
-               }
-            
-            Each hyperparameter ``key`` is associated with a new hyperparameter ``AF_key``. The value of the hyperparameter ``key`` will be computed as the product of ``factor`` and the value of the ``AF_key`` hyperparameter, which defaults to ``default_user_factor``. The value given for ``factor`` is usually ``scale``, ``radius``, ``diameter``, or a polynomial thereof. Another dictionary may be provided as a third component of the tuple, which can specify a ``type``, ``min``, and ``max`` values.
-        """
-        return dict()
-
-
-class ProcessingControl:
-
-    def __init__(self, first_stage=None, last_stage=None):
-        self.started     = True if first_stage is None else False
-        self.first_stage = first_stage
-        self.last_stage  =  last_stage
-    
-    def step(self, stage):
-        if not self.started and stage == self.first_stage: self.started = True
-        do_step = self.started
-        if stage == self.last_stage: self.started = False
-        return do_step
-
-
-class Pipeline:
-    """Represents a processing pipeline for image segmentation.
-    
-    Note that hyperparameters are *not* set automatically if the :py:meth:`~.process_image` method is used directly. Hyperparameters are only set automatically based on the scale of objects, if the :py:mod:`~superdsm.automation` module (as in :ref:`this <usage_example_interactive>` example) or batch processing are used (as in :ref:`this <usage_example_batch>` example). 
-    """
-    
     def __init__(self):
-        self.stages = []
+        super().__init__()
 
-    def process_image(self, g_raw, cfg, first_stage=None, last_stage=None, data=None, out=None, log_root_dir=None):
-        """Performs the segmentation of an image.
+        from .c2freganal import C2F_RegionAnalysis
+        from .dsmcfg import DSM_Config
+        from .globalenergymin import GlobalEnergyMinimization
+        from .postprocess import Postprocessing
+        from .preprocess import Preprocessing
 
-        First, the image is provided to the stages of the pipeline using the :py:meth:`.init` method. Then, the :py:meth:`~.Stage.process` methods of the stages of the pipeline are executed successively.
+        self.stages = [
+            LoadInput(),
+            Preprocessing(),
+            DSM_Config(),
+            C2F_RegionAnalysis(),
+            GlobalEnergyMinimization(),
+            Postprocessing(),
+        ]
 
-        :param g_raw: A ``numpy.ndarray`` object corresponding to the image which is to be processed.
-        :param cfg: A :py:class:`~superdsm.config.Config` object which represents the hyperparameters.
-        :param first_stage: The name of the first stage to be executed.
-        :param last_stage: The name of the last stage to be executed.
-        :param data: The results of a previous execution.
-        :param out: An instance of an :py:class:`~superdsm.output.Output` sub-class, ``'muted'`` if no output should be produced, or ``None`` if the default output should be used.
-        :param log_root_dir: Path to a directory where log files should be written to.
-        :return: Tuple ``(data, cfg, timings)``, where ``data`` is the *pipeline data object* comprising all final and intermediate results, ``cfg`` are the finally used hyperparameters, and ``timings`` is a dictionary containing the execution time of each individual pipeline stage (in seconds).
+    def configure(self, base_config: repype.config.Config, input_id: InputID, *args, **kwargs):
+        if base_config.get('scale', None) is None:
+            img_filepath = self.resolve('input', input_id)
+            img = superdsm.io.imread(img_filepath)
+            base_config['scale'] = _estimate_scale(img, num_radii=10, thresholds=[0.01])[0]
+        return super().configure(base_config, input_id, *args, **kwargs)
+    
 
-        The parameter ``data`` is used if and only if ``first_stage`` is not ``None``. In this case, the outputs produced by the stages of the pipeline which are being skipped must be fed in using the ``data`` parameter obtained from a previous execution of this method.
-        """
-        cfg = cfg.copy()
-        if log_root_dir is not None: mkdir(log_root_dir)
-        if first_stage == self.stages[0].name and data is None: first_stage = None
-        if first_stage is not None and first_stage.endswith('+'): first_stage = self.stages[1 + self.find(first_stage[:-1])].name
-        if first_stage is not None and last_stage is not None and self.find(first_stage) > self.find(last_stage): return data, cfg, {}
-        out  = get_output(out)
-        ctrl = ProcessingControl(first_stage, last_stage)
-        if ctrl.step('init'): data = self.init(g_raw, cfg)
-        else: assert data is not None, 'data argument must be provided if first_stage is used'
-        timings = {}
-        for stage in self.stages:
-            if ctrl.step(stage.name):
-                dt = stage(data, cfg, out=out, log_root_dir=log_root_dir)
-                timings[stage.name] = dt
-        return data, cfg, timings
+class LoadInput(repype.stage.Stage):
 
-    def init(self, g_raw, cfg):
-        """Initializes the pipeline for processing the image ``g_raw``.
+    inputs = ['input_id']
+    outputs = ['input_img']
 
-        :param g_raw: The image which is to be processed by the pipeline.
-        :param cfg: The hyperparameters.
-
-        The image ``g_raw`` is made available as an input to the pipeline stages. However, if ``cfg['histological'] == True`` (i.e. the hyperparameter ``histological`` is set to ``True``), then ``g_raw`` is converted to a brightness-inverse intensity image, and the original image is provided as ``g_rgb`` to the stages of the pipeline.
-
-        In addition, ``g_raw`` is normalized so that the intensities range from 0 to 1.
-        """
-        if cfg.get('histological', False):
-            g_rgb = g_raw
-            g_raw = g_raw.mean(axis=2)
-            g_raw = g_raw.max() - g_raw
-        else:
-            g_rgb = None
-        data = dict(g_raw = normalize_image(g_raw))
-        if g_rgb is not None:
-            data['g_rgb'] = g_rgb
-        return data
-
-    def find(self, stage_name, not_found_dummy=np.inf):
-        """Returns the position of the stage identified by ``stage_name``.
-
-        Returns ``not_found_dummy`` if the stage is not found.
-        """
-        try:
-            return [stage.name for stage in self.stages].index(stage_name)
-        except ValueError:
-            return not_found_dummy
-
-    def append(self, stage, after=None):
-        if after is None: self.stages.append(stage)
-        else:
-            if isinstance(after, str): after = self.find(after)
-            self.stages.insert(after + 1, stage)
+    def process(input_id: InputID, pipeline: Pipeline, config: repype.config.Config, status: Optional[repype.status.Status] = None) -> Dict[str, Any]:
+        img_filepath = pipeline.resolve('input', input_id)
+        return dict(
+            input_img = superdsm.io.imread(img_filepath)
+        )
 
 
-def create_pipeline(stages):
-    """Creates and returns a new :py:class:`.Pipeline` object configured for the given stages.
-
-    The stage order is determined automatically.
+def _blob_doh(image, sigma_list, threshold=0.01, overlap=.5, mask=None):
     """
-    available_inputs = set(['g_raw'])
-    remaining_stages = list(stages)
+    Finds blobs in the given grayscale image.
 
-    pipeline = Pipeline()
-    while len(remaining_stages) > 0:
-        next_stage = None
-        for stage in remaining_stages:
-            if frozenset(stage.inputs.keys()).issubset(available_inputs):
-                next_stage = stage
-                break
-        if next_stage is None:
-            raise ValueError('failed to resolve total ordering')
-        remaining_stages.remove(next_stage)
-        pipeline.append(next_stage)
-        available_inputs |= frozenset(next_stage.outputs.keys())
-
-    return pipeline
-
-
-def create_default_pipeline():
-    """Creates and returns a new pre-configured :py:class:`.Pipeline` object.
-
-    The pipeline consists of the following stages:
-
-    #. :py:class:`~.preprocess.Preprocessing`
-    #. :py:class:`~.dsmcfg.DSM_Config`
-    #. :py:class:`~.c2freganal.C2F_RegionAnalysis`
-    #. :py:class:`~.globalenergymin.GlobalEnergyMinimization`
-    #. :py:class:`~.postprocess.Postprocessing`
-
-    Refer to :ref:`pipeline` for a comprehensive documentation of the pipeline.
+    This implementation is widely based on:
+    https://github.com/scikit-image/scikit-image/blob/fca9f16da4bd7420245d05fa82ee51bb9677b039/skimage/feature/blob.py#L538-L646
     """
-    from .preprocess import Preprocessing
-    from .dsmcfg import DSM_Config
-    from .c2freganal import C2F_RegionAnalysis
-    from .globalenergymin import GlobalEnergyMinimization
-    from .postprocess import Postprocessing
+    skimage.feature.blob.check_nD(image, 2)
+    if mask is None: mask = np.ones(image.shape, bool)
+    if not isinstance(mask, dict): mask = {sigma: mask for sigma in sigma_list}
 
-    stages = [
-        Preprocessing(),
-        DSM_Config(),
-        C2F_RegionAnalysis(),
-        GlobalEnergyMinimization(),
-        Postprocessing(),
-    ]
+    image = skimage.feature.blob.img_as_float(image)
+    image = skimage.feature.blob.integral_image(image)
 
-    return create_pipeline(stages)
+    hessian_images = [mask[s] * skimage.feature.blob._hessian_matrix_det(image, s) for s in sigma_list]
+    image_cube = np.dstack(hessian_images)
 
+    local_maxima = skimage.feature.blob.peak_local_max(image_cube, threshold_abs=threshold,
+                                                       footprint=np.ones((3,) * image_cube.ndim),
+                                                       threshold_rel=0.0,
+                                                       exclude_border=False)
+
+    if local_maxima.size == 0:
+        return np.empty((0, 3))
+    lm = local_maxima.astype(np.float64)
+    lm[:, -1] = sigma_list[local_maxima[:, -1]]
+    return skimage.feature.blob._prune_blobs(lm, overlap)
+
+
+def _estimate_scale(im, min_radius=20, max_radius=200, num_radii=10, thresholds=[0.01], inlier_tol=np.inf):
+    """
+    Estimates the scale of the image.
+    """
+
+    sigma_list = np.linspace(min_radius, max_radius, num_radii) / math.sqrt(2)
+    sigma_list = np.concatenate([[sigma_list.min() / 2], sigma_list])
+    
+    im_norm  = normalize_image(im)
+    im_norm /= im_norm.max()
+
+    blobs_mask  = {sigma: ndi.gaussian_laplace(im_norm, sigma) < 0 for sigma in sigma_list}
+    mean_radius = None
+    for threshold in sorted(thresholds, reverse=True):
+        blobs_doh = _blob_doh(im_norm, sigma_list, threshold=threshold, mask=blobs_mask)
+        blobs_doh = blobs_doh[~np.isclose(blobs_doh[:,2], sigma_list.min())]
+        if len(blobs_doh) == 0: continue
+
+        radii = blobs_doh[:,2] * math.sqrt(2)
+        radii_median  = np.median(radii)
+        radii_mad     = np.mean(np.abs(radii - np.median(radii)))
+        radii_bound   = np.inf if np.isinf(inlier_tol) else radii_mad * inlier_tol
+        radii_inliers = np.logical_and(radii >= radii_median - radii_mad, radii <= radii_median + radii_mad)
+        mean_radius   = np.mean(radii[radii_inliers])
+        break
+    
+    if mean_radius is None:
+        raise ValueError('scale estimation failed')
+    return mean_radius / math.sqrt(2), blobs_doh, radii_inliers
