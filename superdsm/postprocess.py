@@ -122,6 +122,8 @@ class Postprocessing(repype.stage.Stage):
     outputs = ['postprocessed_objects']
 
     def process(self, cover, y_img, atoms, g_raw, dsm_cfg, pipeline, config, status=None, log_root_dir=None):
+        status = repype.status.derive(status)
+        
         # simple post-processing
         max_norm_energy           = config.get(          'max_norm_energy',    0.2)
         discard_image_boundary    = config.get(   'discard_image_boundary',  False)

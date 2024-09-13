@@ -143,6 +143,8 @@ class GlobalEnergyMinimization(repype.stage.Stage):
     outputs = ['y_img', 'cover', 'objects', 'performance']
 
     def process(self, y, y_mask, atoms, adjacencies, dsm_cfg, pipeline, config, status=None, log_root_dir=None):
+        status = repype.status.derive(status)
+        
         y_img             = Image.create_from_array(y, normalize=False, mask=y_mask)
         pruning           = config.get(          'pruning', 'exact')
         beta              = config.get(             'beta',  0)
