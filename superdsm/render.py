@@ -176,7 +176,7 @@ def _fetch_image_from_data(data, normalize_img=True):
 def _fetch_rgb_image_from_data(data, normalize_img=True, override_img=None):
     if override_img is not None:
         img = override_img if override_img.ndim == 3 else np.dstack([override_img] * 3)
-    elif 'g_rgb' in data:
+    elif data.get('g_rgb') is not None:
         img = data['g_rgb']
         if img.max() > 1: img = img / 255
     else:

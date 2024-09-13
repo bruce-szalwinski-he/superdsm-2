@@ -50,27 +50,51 @@ class Pipeline(repype.pipeline.Pipeline):
         diameter = 2 * radius
         return super().configure(base_config, input_id, *args, scale=scale, radius=radius, diameter=diameter, **kwargs)
     
-    def process_image(self, g_raw, base_config, status=None):
+    def process_image(self, g_raw, base_config, *args, **kwargs):
         assert g_raw is not None
-        config = self.configure(base_config, img=g_raw, input_id=None)
+        config = self.configure(base_config, img=g_raw, input_id='')
+        self.stages[0].g_raw = g_raw
         return self.process(
-            input_id=None,
+            input_id='',
             config=config,
-            first_stage='preprocess',
-            data=dict(g_raw = g_raw),
-            status=status,
+            *args,
+            **kwargs
         )
     
 
 class LoadInput(repype.stage.Stage):
+    """
+    Initializes the pipeline for processing the image ``g_raw``.
+
+    The loaded image ``g_raw`` is made available as an input to the subsequent pipeline stages. However, if ``cfg['histological'] == True`` (i.e. the hyperparameter ``histological`` is set to ``True``), then ``g_raw`` is converted to a brightness-inverse intensity image, and the original image is provided as ``g_rgb`` to the stages of the pipeline.
+
+    In addition, ``g_raw`` is normalized so that the intensities range from 0 to 1.
+    """
 
     inputs = ['input_id']
-    outputs = ['g_raw']
+    outputs = ['g_raw', 'g_rgb']
+
+    g_raw: Optional[np.ndarray] = None
+    """
+    If this is not `None`, this image will be loaded by the stage instead of considering the `input` scope and the given `input_id`.
+    """
 
     def process(self, input_id: InputID, pipeline: Pipeline, config: repype.config.Config, status: Optional[repype.status.Status] = None) -> Dict[str, Any]:
-        img_filepath = pipeline.resolve('input', input_id)
-        return dict(
+        if self.g_raw is None:
+            img_filepath = pipeline.resolve('input', input_id)
             g_raw = superdsm.io.imread(img_filepath)
+        else:
+            g_raw = self.g_raw
+            self.g_raw = None
+        if config.get('histological', False):
+            g_rgb = g_raw
+            g_raw = g_raw.mean(axis=2)
+            g_raw = g_raw.max() - g_raw
+        else:
+            g_rgb = None
+        return dict(
+            g_raw = normalize_image(g_raw),
+            g_rgb = g_rgb,
         )
 
 
