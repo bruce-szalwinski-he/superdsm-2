@@ -5,12 +5,12 @@ environ:
   OPENBLAS_NUM_THREADS: 2
   
 scopes:
-  img_pathpattern: "{ROOTDIR}/../data/{DIRNAME}/IXMtest_%s.tif"
-  seg_pathpattern: "seg/%s.png"
-  adj_pathpattern: "adj/%s.png"
+  inputs: "{ROOTDIR}/../data/{DIRNAME}/IXMtest_%s.tif"
+  masks: "seg/%s.png"
+  adjacencies: "adj/%s.png"
   log_pathpattern: "log/%s"
-  cfg_pathpattern: "cfg/%s.yml"
-  overlay_pathpattern: "overlays/%s.png"
+  config: "cfg/%s.yml"
+  overlays: "overlays/%s.png"
 
 input_ids:
   - "A02_s1_w1051DAA7C-7042-435F-99F0-1E847D9B42CB"

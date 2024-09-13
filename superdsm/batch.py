@@ -175,7 +175,7 @@ class Task:
         self.data = Config(data) if parent_task is None else Config(parent_task.data).derive(data)
         self.rel_path = _find_task_rel_path(self)
         self.file_ids = sorted(frozenset(self.data.entries['file_ids'])) if 'file_ids' in self.data else None
-        self.img_pathpattern = self.data.update('img_pathpattern', lambda img_pathpattern: str(self.resolve_path(img_pathpattern)))
+        self.img_pathpattern = self.data.update('img_pathpattern', lambda inputs: str(self.resolve_path(img_pathpattern)))
 
         if 'base_config_path' in self.data:
             base_config_path = self.resolve_path(self.data['base_config_path'])

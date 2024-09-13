@@ -3,11 +3,11 @@ environ:
   OPENBLAS_NUM_THREADS: 2
   
 scopes:
-  img_pathpattern: "{ROOTDIR}/../data/{DIRNAME}/t%03d.tif"
-  seg_pathpattern: "seg/t%03d.png"
-  adj_pathpattern: "adj/t%03d.png"
+  inputs: "{ROOTDIR}/../data/{DIRNAME}/t%03d.tif"
+  masks: "seg/t%03d.png"
+  adjacencies: "adj/t%03d.png"
   log_pathpattern: "log/t%03d"
-  cfg_pathpattern: "cfg/t%03d.yml"
-  overlay_pathpattern: "overlays/t%03d.png"
+  config: "cfg/t%03d.yml"
+  overlays: "overlays/t%03d.png"
 
 input_ids: 1, 22, 25, 27-30, 35, 39, 46, 47, 52, 55, 60, 65, 72, 76, 80, 82, 91

@@ -3,11 +3,11 @@ environ:
   OPENBLAS_NUM_THREADS: 2
   
 scopes:
-  img_pathpattern: "{ROOTDIR}/../data/{DIRNAME}/dna-%d.png"
-  seg_pathpattern: "seg/dna-%d.png"
-  adj_pathpattern: "adj/dna-%d.png"
+  inputs: "{ROOTDIR}/../data/{DIRNAME}/dna-%d.png"
+  masks: "seg/dna-%d.png"
+  adjacencies: "adj/dna-%d.png"
   log_pathpattern: "log/dna-%d"
-  cfg_pathpattern: "cfg/dna-%d.yml"
-  overlay_pathpattern: "overlays/dna-%d.png"
+  config: "cfg/dna-%d.yml"
+  overlays: "overlays/dna-%d.png"
 
 input_ids: 0-30, 32-42, 44-49

@@ -82,7 +82,7 @@ class LoadInput(repype.stage.Stage):
         from .image import normalize_image
 
         if self.g_raw is None:
-            img_filepath = pipeline.resolve('input', input_id)
+            img_filepath = pipeline.resolve('inputs', input_id)
             g_raw = superdsm.io.imread(img_filepath)
         else:
             g_raw = self.g_raw
