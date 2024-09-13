@@ -3,9 +3,7 @@ SuperDSM API
 
 .. toctree::
     superdsm.pipeline
-    superdsm.config
     superdsm.io
-    superdsm.automation
     superdsm.image
     superdsm.dsm
     superdsm.dsmcfg
@@ -20,4 +18,3 @@ SuperDSM API
     superdsm.batch
     superdsm.export
     superdsm.render
-    superdsm.output
