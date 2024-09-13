@@ -19,8 +19,8 @@ import superdsm.io
 
 class Pipeline(repype.pipeline.Pipeline):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
         from .c2freganal import C2F_RegionAnalysis
         from .dsmcfg import DSM_Config
