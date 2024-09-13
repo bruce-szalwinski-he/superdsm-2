@@ -54,6 +54,7 @@ def normalize_image(img):
     if img_diff == 0: img_diff = 1
     return (img - img.min()).astype(float) / img_diff
 
+
 class Image:
     """This class facilitates the work with images, image masks, and image regions.
     """

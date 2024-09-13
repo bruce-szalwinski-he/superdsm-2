@@ -15,7 +15,6 @@ from repype.typing import (
 )
 
 import superdsm.io
-from superdsm.render import normalize_image
 
 
 class Pipeline(repype.pipeline.Pipeline):
@@ -80,18 +79,22 @@ class LoadInput(repype.stage.Stage):
     """
 
     def process(self, input_id: InputID, pipeline: Pipeline, config: repype.config.Config, status: Optional[repype.status.Status] = None) -> Dict[str, Any]:
+        from .image import normalize_image
+
         if self.g_raw is None:
             img_filepath = pipeline.resolve('input', input_id)
             g_raw = superdsm.io.imread(img_filepath)
         else:
             g_raw = self.g_raw
             self.g_raw = None
+
         if config.get('histological', False):
             g_rgb = g_raw
             g_raw = g_raw.mean(axis=2)
             g_raw = g_raw.max() - g_raw
         else:
             g_rgb = None
+
         return dict(
             g_raw = normalize_image(g_raw),
             g_rgb = g_rgb,
@@ -131,6 +134,7 @@ def _estimate_scale(im, min_radius=20, max_radius=200, num_radii=10, thresholds=
     """
     Estimates the scale of the image.
     """
+    from superdsm.render import normalize_image
 
     sigma_list = np.linspace(min_radius, max_radius, num_radii) / math.sqrt(2)
     sigma_list = np.concatenate([[sigma_list.min() / 2], sigma_list])
