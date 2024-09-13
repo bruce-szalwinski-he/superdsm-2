@@ -41,7 +41,8 @@ class Pipeline(repype.pipeline.Pipeline):
         scale = base_config.get('scale', None)
         if scale is None:
             if img is None:
-                img_filepath = self.resolve('input', input_id)
+                img_filepath = self.resolve('inputs', input_id)
+                assert img_filepath is not None, f'Scopes: {self.scopes}'
                 img = superdsm.io.imread(img_filepath)
             scale = _estimate_scale(img, num_radii=10, thresholds=[0.01])[0]
             base_config['scale'] = scale

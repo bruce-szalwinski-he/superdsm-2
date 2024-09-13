@@ -1,5 +1,7 @@
 import csv
+import os
 
+import ray
 import repype.config
 import repype.stage
 import repype.status
@@ -10,10 +12,10 @@ from repype.typing import (
     PipelineData,
 )
 
+import superdsm.globalenergymin
+import superdsm.io
 import superdsm.pipeline
 import superdsm.render
-import superdsm.io
-import superdsm.globalenergymin
 
 
 def _write_performance_report(task_path, performance_path, data, overall_performance):
@@ -36,10 +38,13 @@ def _write_performance_report(task_path, performance_path, data, overall_perform
 class Task(repype.task.Task):
 
     def create_pipeline(self, *args, **kwargs) -> Pipeline:
-        return superdsm.pipeline.Pipeline(*args, **kwargs)
+        scopes = self.full_spec.get('scopes', dict())
+        scopes = {key: self.resolve_path(value) for key, value in scopes.items()}
+        return superdsm.pipeline.Pipeline(*args, scopes=scopes, **kwargs)
 
     def run(self, *args, **kwargs) -> repype.task.TaskData:
-        data = super().run()
+        ray.init(num_cpus=int(os.environ.get('SUPERDSM_NUM_CPUS', 2)), log_to_driver=False, logging_level='error')
+        data = super().run(*args, **kwargs)
 
         # Aggregate performance report
         performance = superdsm.globalenergymin.PerformanceReport()
