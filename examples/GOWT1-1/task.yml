@@ -1,0 +1,13 @@
+environ:
+  MKL_NUM_THREADS: 2
+  OPENBLAS_NUM_THREADS: 2
+  
+scopes:
+  img_pathpattern: "{ROOTDIR}/../data/{DIRNAME}/t%03d.tif"
+  seg_pathpattern: "seg/t%03d.png"
+  adj_pathpattern: "adj/t%03d.png"
+  log_pathpattern: "log/t%03d"
+  cfg_pathpattern: "cfg/t%03d.yml"
+  overlay_pathpattern: "overlays/t%03d.png"
+
+input_ids: 2, 5-8, 10, 12-21, 27-29, 31-34, 37, 39-41, 44-47

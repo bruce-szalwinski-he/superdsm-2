@@ -1,9 +1,0 @@
-{
-    "runnable": true,
-
-    "config": {
-        "postprocess": {
-            "discard_image_boundary": true
-        }
-    }
-}
