@@ -1,6 +1,10 @@
 import unittest
+
 import ray
-import superdsm.io, superdsm.render
+import repype.config
+
+import superdsm.io
+import superdsm.render
 
 from . import testsuite
 
@@ -21,7 +25,7 @@ class render(unittest.TestCase):
         img_3d = superdsm.io.imread(data_path)
         img = img_3d[28]
         pipeline = superdsm.pipeline.Pipeline()
-        self.data, config, _ = pipeline.process_image(img, superdsm.config.Config(), status=None)
+        self.data, config, _ = pipeline.process_image(img, repype.config.Config(), status=None)
         print(config)
         establish_deterministic_object_order(self.data)
 

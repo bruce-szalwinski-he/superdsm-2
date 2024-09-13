@@ -7,5 +7,4 @@ __version__ = VERSION
 from . import _mkl
 
 from . import pipeline
-from . import config
 
