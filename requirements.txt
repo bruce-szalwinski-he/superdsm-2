@@ -9,4 +9,4 @@ cvxpy==1.5.3
 matplotlib>=3.0
 mkl>=2020.0
 imagecodecs==2024.6.1
-repype @ git+https://github.com/kostrykin/repype@e9dc8d87788c984222ebd14e30364fa3120bff1c
+repype @ git+https://github.com/kostrykin/repype@985d9e88a895c90f516e35cd5753370d3f9c9456
