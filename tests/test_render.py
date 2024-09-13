@@ -21,7 +21,8 @@ class render(unittest.TestCase):
         img_3d = superdsm.io.imread(data_path)
         img = img_3d[28]
         pipeline = superdsm.pipeline.Pipeline()
-        self.data, _, _ = pipeline.process_image(img, superdsm.config.Config(), status=None)
+        self.data, config, _ = pipeline.process_image(img, superdsm.config.Config(), status=None)
+        print(config)
         establish_deterministic_object_order(self.data)
 
     @classmethod
