@@ -3,7 +3,7 @@ environ:
   OPENBLAS_NUM_THREADS: 2
   
 scopes:
-  inputs: "{ROOTDIR}/../data/{DIRNAME}/dna-%d.png"
+  inputs: "{ROOTDIR}/../data/NIH3T3/dna-%d.png"
   masks: "seg/dna-%d.png"
   adjacencies: "adj/dna-%d.png"
   log_pathpattern: "log/dna-%d"

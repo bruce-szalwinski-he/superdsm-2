@@ -5,7 +5,7 @@ environ:
   OPENBLAS_NUM_THREADS: 2
   
 scopes:
-  inputs: "{ROOTDIR}/../data/{DIRNAME}/IXMtest_%s.tif"
+  inputs: "{ROOTDIR}/../data/BBBC039/IXMtest_%s.tif"
   masks: "seg/%s.png"
   adjacencies: "adj/%s.png"
   log_pathpattern: "log/%s"

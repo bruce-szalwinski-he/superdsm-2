@@ -3,7 +3,7 @@ environ:
   OPENBLAS_NUM_THREADS: 2
   
 scopes:
-  inputs: "{ROOTDIR}/../data/{DIRNAME}/t%03d.tif"
+  inputs: "{ROOTDIR}/../data/GOWT1-1/t%03d.tif"
   masks: "seg/t%03d.png"
   adjacencies: "adj/t%03d.png"
   log_pathpattern: "log/t%03d"
