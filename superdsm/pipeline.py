@@ -7,12 +7,6 @@ import repype.status
 import scipy.ndimage as ndi
 import skimage
 import skimage.feature.blob
-from repype.typing import (
-    Any,
-    Dict,
-    InputID,
-    Optional,
-)
 
 import superdsm.io
 
@@ -37,7 +31,7 @@ class Pipeline(repype.pipeline.Pipeline):
             Postprocessing(),
         ]
 
-    def configure(self, base_config: repype.config.Config, input_id: InputID, *args, img=None, **kwargs):
+    def configure(self, base_config, input_id, *args, img=None, **kwargs):
         scale = base_config.get('scale', None)
         if scale is None:
             if img is None:
@@ -49,7 +43,7 @@ class Pipeline(repype.pipeline.Pipeline):
         radius = scale * math.sqrt(2)
         diameter = 2 * radius
         return super().configure(base_config, input_id, *args, scale=scale, radius=radius, diameter=diameter, **kwargs)
-    
+
     def process_image(self, g_raw, base_config, *args, **kwargs):
         assert g_raw is not None
         config = self.configure(base_config, img=g_raw, input_id='')
@@ -60,13 +54,16 @@ class Pipeline(repype.pipeline.Pipeline):
             *args,
             **kwargs
         )
-    
+
 
 class LoadInput(repype.stage.Stage):
     """
     Initializes the pipeline for processing the image ``g_raw``.
 
-    The loaded image ``g_raw`` is made available as an input to the subsequent pipeline stages. However, if ``cfg['histological'] == True`` (i.e. the hyperparameter ``histological`` is set to ``True``), then ``g_raw`` is converted to a brightness-inverse intensity image, and the original image is provided as ``g_rgb`` to the stages of the pipeline.
+    The loaded image ``g_raw`` is made available as an input to the subsequent pipeline stages. However, if
+    ``config['histological'] == True`` (i.e. the hyperparameter ``histological`` is set to ``True``), then ``g_raw`` is
+    converted to a brightness-inverse intensity image, and the original image is provided as ``g_rgb`` to the stages of
+    the pipeline.
 
     In addition, ``g_raw`` is normalized so that the intensities range from 0 to 1.
     """
@@ -74,12 +71,9 @@ class LoadInput(repype.stage.Stage):
     inputs = ['input_id']
     outputs = ['g_raw', 'g_rgb']
 
-    g_raw: Optional[np.ndarray] = None
-    """
-    If this is not `None`, this image will be loaded by the stage instead of considering the `input` scope and the given `input_id`.
-    """
+    g_raw = None
 
-    def process(self, input_id: InputID, pipeline: Pipeline, config: repype.config.Config, status: Optional[repype.status.Status] = None) -> Dict[str, Any]:
+    def process(self, input_id, pipeline, config, status=None):
         from .image import normalize_image
 
         if self.g_raw is None:
@@ -97,8 +91,8 @@ class LoadInput(repype.stage.Stage):
             g_rgb = None
 
         return dict(
-            g_raw = normalize_image(g_raw),
-            g_rgb = g_rgb,
+            g_raw=normalize_image(g_raw),
+            g_rgb=g_rgb,
         )
 
 

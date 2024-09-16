@@ -91,7 +91,8 @@ def _get_cached_normalized_energy_computer(y, cluster):
 
 
 class C2F_RegionAnalysis(repype.stage.Stage):
-    """Implements the :ref:`pipeline_theory_c2freganal` scheme.
+    """
+    Implements the :ref:`pipeline_theory_c2freganal` scheme.
 
     This stage requires ``y`` and ``dsm_cfg`` for input and produces ``y_mask``, ``atoms``, ``adjacencies``, ``seeds``, ``clusters`` for output. Refer to :ref:`pipeline_inputs_and_outputs` for more information on the available inputs and outputs.
 
@@ -116,7 +117,7 @@ class C2F_RegionAnalysis(repype.stage.Stage):
         Threshold for the "irregularity" of image regions, which is used to determine the output ``y_mask``. Image regions with an "irregularity" higher than this value are masked as "empty" image regions and discarded from further considerations. This is the threshold for the P/A ratio described in :ref:`Kostrykin and Rohr (TPAMI 2023, <references>` see Section 3.1 and *max_pa_ratio* in Supplemental Material 8). Defaults to 0.2.
 
     .. note::
-       This stage takes the DSM-related hyperparameters as an input. Due to a bug in the original implementation, the value set for the hyperparameter ``dsm/background_margin`` was disrespected and a value of 20 was always used instead. However, the impact on the results is only subtle. Having this issue fixed, the results are mostly consistent with those originally reported in :ref:`Kostrykin and Rohr (TPAMI 2023, <references>` the hyperparameter :math:`\\alpha` is changed from 0.1 to 0.2 for the GOWT1-2 dataset when using SuperDSM*, see the ``examples/GOWT1-2/default/adapted/task.json`` file).
+       This stage takes the DSM-related hyperparameters as an input. Due to a bug in the original implementation, the value set for the hyperparameter ``dsm/background_margin`` was disrespected and a value of 20 was always used instead. However, the impact on the results is only subtle. Having this issue fixed, the results are mostly consistent with those originally reported in :ref:`Kostrykin and Rohr (TPAMI 2023, <references>` the hyperparameter :math:`\\alpha` is changed from 0.1 to 0.2 for the GOWT1-2 dataset when using SuperDSM, see the ``examples/GOWT1-2/default/adapted/task.json`` file).
     """
 
     id = 'c2f-region-analysis'
