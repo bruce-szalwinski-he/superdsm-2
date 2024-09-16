@@ -18,3 +18,5 @@
 /tests/data
 /tests/actual
 /tests/logs
+/.venv
+/docs/build
