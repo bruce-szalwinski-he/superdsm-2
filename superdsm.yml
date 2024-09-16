@@ -245,4 +245,4 @@ dependencies:
   - requests==2.32.3
   - rpds-py==0.20.0
   - urllib3==2.2.2
-  - repype @ git+https://github.com/kostrykin/repype@6c1c95f6255715dfbf6f5a36f3b9a87a05ec540c
+  - repype==1.0.0
