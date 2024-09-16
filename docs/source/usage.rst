@@ -24,13 +24,13 @@ To run SuperDSM from command line, use:
 
 .. code-block:: console
 
-   python -m 'superdsm' --help
+   python -m superdsm --help
 
 To run the interactive text-based user interface, use:
 
 .. code-block:: console
 
-   python -m 'superdsm.textual'
+   python -m superdsm.textual
 
 For details, see :ref:`batch_system`.
 
@@ -43,8 +43,8 @@ To use SuperDSM interactively, i.e. programatically as opposed to batch processi
 
 .. code-block:: python
 
-   import ray
-   ray.init(num_cpus=16, log_to_driver=False, logging_level='error')
+    import ray
+    ray.init(num_cpus=16, log_to_driver=False, logging_level='error')
 
 After this initialization routine, SuperDSM is ready to use:
 

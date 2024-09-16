@@ -58,7 +58,7 @@ class Pipeline(repype.pipeline.Pipeline):
 
 class LoadInput(repype.stage.Stage):
     """
-    Initializes the pipeline for processing the image ``g_raw``.
+    Loads the input image into the pipeline.
 
     The loaded image ``g_raw`` is made available as an input to the subsequent pipeline stages. However, if
     ``config['histological'] == True`` (i.e. the hyperparameter ``histological`` is set to ``True``), then ``g_raw`` is
