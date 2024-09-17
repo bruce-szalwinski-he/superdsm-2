@@ -115,10 +115,10 @@ Inputs and outputs
 Pipeline stages require different inputs and produce different outputs. These are like intermediate results, which are shared or passed between the stages. The pipeline maintains their state, which is kept inside the *pipeline data object*. Below is an overview over all inputs and outputs available within the SuperDSM pipeline:
 
 ``g_raw``
-    The raw image intensities :math:`g_{x^{1}}, \dots, g_{x^{\#\Omega}}`, normalized so that the intensities range from 0 to 1. Up to the normalization, this corresponds to the original input image, unless histological image data is being processed (i.e. the hyperparameter ``histological`` is set to ``True``). Provided by the :py:class:`~.pipeline.LoadInput` stage.
+    The raw image intensities :math:`g_{x^{1}}, \dots, g_{x^{\#\Omega}}`, normalized so that the intensities range from 0 to 1. Up to the normalization, this corresponds to the original input image, unless histological image data is being processed (i.e. the hyperparameter ``histological`` is set to `True`). Provided by the :py:class:`~.pipeline.LoadInput` stage.
 
 ``g_rgb``
-    This is the original image, if histological image data is being processed (i.e. the hyperparameter ``histological`` is set to ``True``). Otherwise, ``g_rgb`` is not available as an input. Provided by the :py:class:`~.pipeline.LoadInput` stage.
+    This is the original image, if histological image data is being processed (i.e. the hyperparameter ``histological`` is set to `True`). Otherwise, ``g_rgb`` is not available as an input. Provided by the :py:class:`~.pipeline.LoadInput` stage.
 
 ``y``
     The offset image intensities :math:`Y_\omega|_{\omega = \Omega}`, represented as an object of type ``numpy.ndarray`` of the same shape as the ``g_raw`` image. Provided by the :py:class:`~.preprocess.Preprocessing` stage.
@@ -127,7 +127,7 @@ Pipeline stages require different inputs and produce different outputs. These ar
     A dictionary corresponding to the hyperparameters which reside in the ``dsm`` namespace. Provided by the :py:class:`~.dsmcfg.DSM_Config` stage.
 
 ``y_mask``
-    Binary image corresponding to a mask of "empty" image regions (``False``), that are discarded from consideration, and those which possibly contain objects and are considered for segmentation (``True``). This is described in Section 3.1 of the paper. Provided by the :py:class:`~.c2freganal.C2F_RegionAnalysis` stage.
+    Binary image corresponding to a mask of "empty" image regions (`False`), that are discarded from consideration, and those which possibly contain objects and are considered for segmentation (`True`). This is described in Section 3.1 of the paper. Provided by the :py:class:`~.c2freganal.C2F_RegionAnalysis` stage.
 
 ``atoms``
     Integer-valued image representing the universe of atomic image regions. Each atomic image region has a unique label, which is the integer value. Provided by the :py:class:`~.c2freganal.C2F_RegionAnalysis` stage.
@@ -187,7 +187,7 @@ To perform batch processing of a dataset, you first need to create a *repype tas
 The meaning of the different fields is the follows:
 
 ``runnable``
-    Marks this task as runnable (or not runnable). If set to ``false``, the specification will be treated as a template for derived tasks. Derived tasks are placed in sub-folders and inherit the specification of the parent task. This is useful, for example, if you want to try out different hyperparameters. The batch system automatically picks up intermediate results of parent tasks to speed up the completion of derived tasks.
+    Marks this task as runnable (or not runnable). If set to `False`, the specification will be treated as a template for derived tasks. Derived tasks are placed in sub-folders and inherit the specification of the parent task. This is useful, for example, if you want to try out different hyperparameters. The batch system automatically picks up intermediate results of parent tasks to speed up the completion of derived tasks.
 
 ``environ``
     Defines environment variables which are to be set. In the example above, MKL and OpenBLAS numpy backends are both instructed to use two threads for parallel computations.

@@ -25,7 +25,7 @@ class AtomAdjacencyGraph:
         clusters: Integer-valued image representing the regions of possibly clustered obejcts. Each region has a unique
             label, which is the integer value.
         fg_mask: Binary image corresponding to a rough representation of the image foreground. This means that an image
-            point :math:`x \\in \\Omega` is ``True`` if :math:`Y_\\omega|_{\\omega=\\{x\\}} > 0` and ``False``
+            point :math:`x \\in \\Omega` is `True` if :math:`Y_\\omega|_{\\omega=\\{x\\}} > 0` and `False`
             otherwise.
         seeds: The seed points which were used to determine the atomic image regions, represented by a list of tuples
             of coordinates. The :ref:`pipeline` only uses these for rendering the adjacency graph (see the
@@ -203,8 +203,8 @@ class AtomAdjacencyGraph:
     def get_edge_lines(self, accept='all', reduce=True):
         """Returns a list of lines corresponding to the edges of the graph.
 
-        :param accept: Must be either ``all`` or a callable. If ``all`` is used, all edges of the graph are included. Otherwise, an edge ``(i,j)`` is included only if ``accept(i)`` and ``accept(j)`` evaluate to ``True``, where ``i`` and ``j`` are the labels of two adjacent atomic image regions.
-        :param reduce: If ``True``, then an edge ``(i,j)`` is included only if ``i > j``. Otherwise, both edges ``(i,j)`` and ``(j,i)`` are included.
+        :param accept: Must be either ``all`` or a callable. If ``all`` is used, all edges of the graph are included. Otherwise, an edge ``(i,j)`` is included only if ``accept(i)`` and ``accept(j)`` evaluate to `True`, where ``i`` and ``j`` are the labels of two adjacent atomic image regions.
+        :param reduce: If `True`, then an edge ``(i,j)`` is included only if ``i > j``. Otherwise, both edges ``(i,j)`` and ``(j,i)`` are included.
 
         Each line is a tuple of two seed points, and each seed point is a tuple of coordinates.
 

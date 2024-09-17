@@ -28,7 +28,7 @@ from .dsm import (
 class BaseObject:
     """Each object of this class represents a segmentation mask, consisting of a *foreground fragment* and an *offset*.
 
-    The attributes :py:attr:`~.fg_offset` and :py:attr:`~.fg_fragment` are initialized with ``None``, indicating that they have not been computed yet.
+    The attributes :py:attr:`~.fg_offset` and :py:attr:`~.fg_fragment` are initialized with `None`, indicating that they have not been computed yet.
     """
 
     def __init__(self):
@@ -73,13 +73,13 @@ class Object(BaseObject):
 
     :ivar footprint: Set of integer labels that identify the atomic image regions, which the object represents.
     :ivar energy: The value of the set energy function :math:`\\nu(X)` (see :ref:`pipeline_theory_jointsegandclustersplit`).
-    :ivar on_boundary: ``True`` if this object intersects the image boundary.
-    :ivar is_optimal: ``True`` if optimization of :py:attr:`~.energy` was successful.
+    :ivar on_boundary: `True` if this object intersects the image boundary.
+    :ivar is_optimal: `True` if optimization of :py:attr:`~.energy` was successful.
     :ivar processing_time: How long the computation of the attributes took (in seconds).
 
     The attributes :py:attr:`~.energy`, :py:attr:`~.on_boundary`, :py:attr:`~.is_optimal`, :py:attr:`~.processing_time` are initialized with ``nan``, which indicates that the values have not been computed yet, i.e. the object was not passed to the :py:meth:`~compute_objects` function yet.
 
-    Possible reasons for :py:attr:`~.is_optimal` being ``False`` include the rare cases of numerical issues during optimization as well as regions of the size of a single pixel.
+    Possible reasons for :py:attr:`~.is_optimal` being `False` include the rare cases of numerical issues during optimization as well as regions of the size of a single pixel.
     """
 
     def __init__(self):
@@ -265,9 +265,9 @@ def compute_objects(objects, y, atoms, dsm_cfg, log_root_dir, status_line=DEFAUL
     :param y: An :py:class:`~.image.Image` object corresponding to the offset image intensities.
     :param atoms: Integer-valued image representing the universe of atomic image regions (each atomic image region has a unique label, which is the integer value).
     :param dsm_cfg: Dictionary of hyperparameters defined in the :py:class:`~superdsm.dsmcfg.DSM_Config` stage (without the leading ``dsm/`` namespace prefix).
-    :param log_root_dir: Path of directory where log files will be written, or ``None`` if no log files should be written.
+    :param log_root_dir: Path of directory where log files will be written, or `None` if no log files should be written.
     :param status_line: Tuple ``(s1, s2)``, where ``s1`` is the line of text to be written while objects are being computed, and ``s2`` is the line of text to be written when finished.
-    :param out: An instance of an :py:class:`~superdsm.output.Output` sub-class, ``'muted'`` if no output should be produced, or ``None`` if the default output should be used.
+    :param out: An instance of an :py:class:`~superdsm.output.Output` sub-class, ``'muted'`` if no output should be produced, or `None` if the default output should be used.
     """
     dsm_cfg = copy_dict(dsm_cfg)
     smooth_mat_max_allocations = dsm_cfg.pop('smooth_mat_max_allocations', np.inf)

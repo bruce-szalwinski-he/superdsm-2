@@ -4,7 +4,7 @@ import numpy as np
 def get_pixel_map(shape, normalized=False):
     """Returns two 2D arrays corresponding to pixel coordinates of an array of the given shape.
 
-    The first array corresponds to the row indices (coordinates), the second array corresponds to the column indices (coordinates). The coordinates are normalized to the range between 0 and 1 if ``normalized`` is ``True``.
+    The first array corresponds to the row indices (coordinates), the second array corresponds to the column indices (coordinates). The coordinates are normalized to the range between 0 and 1 if ``normalized`` is `True`.
 
     :return: The two 2D arrays, encapsulated as a single 3D array.
 
@@ -22,7 +22,7 @@ def get_pixel_map(shape, normalized=False):
 def bbox(mask, include_end=False):
     """Returns the bounding box of a mask.
 
-    :param include_end: If ``True``, then the pair of last indices ``bbox[0][1]`` and ``bbox[1][1]`` is *included* in the specified ranges. It is *excluded* otherwise.
+    :param include_end: If `True`, then the pair of last indices ``bbox[0][1]`` and ``bbox[1][1]`` is *included* in the specified ranges. It is *excluded* otherwise.
     :return: Tuple ``(bbox, sel)``, where ``bbox[0]`` are the first and last indices of the rows and ``bbox[1]`` are the first and last indices of the columns, and ``sel`` is a numpy slice corresponding to that image region.
 
     .. runblock:: pycon
@@ -75,7 +75,7 @@ class Image:
         """Returns the image region specified by a mask.
         
         :param mask: The binary mask used to specify the image region.
-        :param shrink: If ``True``, the image region will be reduced.
+        :param shrink: If `True`, the image region will be reduced.
         :return: The image region specified by the mask.
         """
         mask = np.logical_and(self.mask, mask)

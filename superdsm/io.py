@@ -12,7 +12,7 @@ def imsave(filepath, img, shape=None, antialias=False):
     :param filepath: The path of the file to be written.
     :param img: A ``numpy.ndarray`` object corresponding to the image data.
     :param shape: Resolution of the image to be written. Useful for up- and downsampling the image data.
-    :param antialias: Whether interpolation and/or anti aliasing should be used for resampling (only used if ``shape`` is not ``None``).
+    :param antialias: Whether interpolation and/or anti aliasing should be used for resampling (only used if ``shape`` is not `None`).
     """
     if shape is not None:
         aa, aa_sigma = False, None

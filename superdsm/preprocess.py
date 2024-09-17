@@ -25,7 +25,7 @@ class Preprocessing(repype.stage.Stage):
         Corresponds to :math:`\\tau_\\text{max}` in Supplemental Material 1. Defaults to :math:`3`.
 
     ``preprocess/lower_clip_mean``
-        If ``True``, intensity offsets :math:`\\tau_x` smaller than the mean image intensity are set to the mean image intensity. Defaults to ``False``.
+        If `True`, intensity offsets :math:`\\tau_x` smaller than the mean image intensity are set to the mean image intensity. Defaults to `False`.
     """
 
     id = 'preprocess'

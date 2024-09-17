@@ -101,7 +101,7 @@ class DeformableShapeModel:
         :param center: The coordinates of the center of the ellipse.
         :param halfaxis1_len: The length of the first half axis.
         :param halfaxis2_len: The length of the second half axis.
-        :param U: An orthonormal matrix whose eigenvectors define the rotation of the ellipse, or ``None`` if a random rotation should be used.
+        :param U: An orthonormal matrix whose eigenvectors define the rotation of the ellipse, or `None` if a random rotation should be used.
         """
         ev = lambda half_length: (1. / np.square(half_length))
         if U is None: U = orth(np.random.randn(2, 2)) # random rotation matrix
@@ -426,12 +426,12 @@ class CP:
     :param params0: Parameters vector used for initialization.
     :param scale: Fixed factor used to slightly improve numerical stabilities.
     :param cachesize: The maximum number of entries used for caching the values of the ``energy`` function, the gradient, and the Hessian.
-    :param cachetest: The test function to be used for cache testing. If ``None``, then ``numpy.array_equal`` will be used.
-    :param timeout: The maximum run time of the :py:meth:`~.solve` method (in seconds). Convex programming will be interrupted by raising a :py:class:`~TimeoutError` if it takes longer than that. If this is set to ``None``, the run time is not limited.
+    :param cachetest: The test function to be used for cache testing. If `None`, then ``numpy.array_equal`` will be used.
+    :param timeout: The maximum run time of the :py:meth:`~.solve` method (in seconds). Convex programming will be interrupted by raising a :py:class:`~TimeoutError` if it takes longer than that. If this is set to `None`, the run time is not limited.
     """
 
     CHECK_NUMBERS = False
-    """Performs additional assertions when set to ``True`` which are useful for debugging but might increase the overall run time (sparse matrices need to be converted to dense).
+    """Performs additional assertions when set to `True` which are useful for debugging but might increase the overall run time (sparse matrices need to be converted to dense).
     """
 
     def __init__(self, energy, params0, scale=1, cachesize=0, cachetest=None, timeout=None):

@@ -53,14 +53,14 @@ def render_adjacencies(data, normalize_img=True, edge_thickness=3, endpoint_radi
     By default, the adjacency graph is rendered on top of the contrast-enhanced raw image itensities. Contrast enhancement is performed using the :py:meth:`normalize_image` function.
 
     :param data: The pipeline data object.
-    :param normalize_img: ``True`` if contrast-enhancement should be performed and ``False`` otherwise. Only used if ``override_img`` is ``None``.
+    :param normalize_img: `True` if contrast-enhancement should be performed and `False` otherwise. Only used if ``override_img`` is `None`.
     :param edge_thickness: The thickness of the edges of the adjacency graph.
     :param endpoint_radius: The radius of the nodes of the adjacency graph.
     :param endpoint_edge_thickness: The thickness of the border drawn around the nodes of the adjacency graph.
     :param edge_color: The color of the edges of the adjacency graph (RGB).
     :param endpoint_color: The color of the nodes of the adjacency graph (RGB).
     :param endpoint_edge_color: The color of the border drawn around the nodes of the adjacency graph (RGB).
-    :param override_img: The image on top of which the adjacency graph is to be rendered. If ``None``, the (contrast-enhanced) raw image itensities will be used.
+    :param override_img: The image on top of which the adjacency graph is to be rendered. If `None`, the (contrast-enhanced) raw image itensities will be used.
     :return: An object of type ``numpy.ndarray`` corresponding to an RGB image of the adjacency graph.
 
     .. hlist::
@@ -105,7 +105,7 @@ def render_ymap(data, clim=None, cmap='bwr'):
     """Returns a visualization of the offset image intensities :math:`Y_\omega|_{\omega = \Omega}` (see :py:ref:`pipeline_theory_cvxprog`).
 
     :param data: The pipeline data object.
-    :param clim: Tuple of the structure ``(cmin, cmax)``, where ``cmin`` and ``cmax`` are used for intensity clipping. The limits ``cmin`` and ``cmax`` are chosen automatically if ``clim`` is set to ``None``.
+    :param clim: Tuple of the structure ``(cmin, cmax)``, where ``cmin`` and ``cmax`` are used for intensity clipping. The limits ``cmin`` and ``cmax`` are chosen automatically if ``clim`` is set to `None`.
     :param cmap: Name of the color map to use for encoding the offset image intensities (see `the list <https://matplotlib.org/stable/tutorials/colors/colormaps.html>`_).
     :return: An object of type ``numpy.ndarray`` corresponding to an RGB image of the offset image intensities.
 
@@ -141,8 +141,8 @@ def normalize_image(img, spread=1, ret_minmax=False):
 
     :param img: The image to be enhanced (object of ``numpy.ndarray`` type).
     :param spread: Governs the amount of enhancement. The lower the value, the stronger the enhancement.
-    :param ret_minmax: ``True`` if the clipped image intensities should be returned and ``False`` otherwise.
-    :return: The contrast-enhanced image if ``ret_minmax`` is ``False``, and a tuple of the structure ``(img, minval, maxval)`` if ``ret_minmax`` is ``True``, where ``img`` is the contrast-enhanced image, and ``minval`` and ``maxval`` are the clipped image intensities, respectively.
+    :param ret_minmax: `True` if the clipped image intensities should be returned and `False` otherwise.
+    :return: The contrast-enhanced image if ``ret_minmax`` is `False`, and a tuple of the structure ``(img, minval, maxval)`` if ``ret_minmax`` is `True`, where ``img`` is the contrast-enhanced image, and ``minval`` and ``maxval`` are the clipped image intensities, respectively.
 
     .. hlist::
        :columns: 2
@@ -193,11 +193,11 @@ def render_atoms(data, normalize_img=True, discarded_color=(0.3, 1, 0.3, 0.1), b
     """Returns a visualization of the atomic image regions (see :ref:`pipeline_theory_c2freganal`).
 
     :param data: The pipeline data object.
-    :param normalize_img: ``True`` if contrast-enhancement should be performed and ``False`` otherwise. Only used if ``override_img`` is ``None``.
+    :param normalize_img: `True` if contrast-enhancement should be performed and `False` otherwise. Only used if ``override_img`` is `None`.
     :param discarded_color: The color of image regions which are entirely discarded from processing (RGBA).
     :param border_radius: The half width of the borders of the atomic image regions.
     :param border_color: The color of the borders of the atomic image regions (RGB).
-    :param override_img: The image on top of which the borders of the atomic image regions are to be rendered. If ``None``, the (contrast-enhanced) raw image itensities will be used.
+    :param override_img: The image on top of which the borders of the atomic image regions are to be rendered. If `None`, the (contrast-enhanced) raw image itensities will be used.
     :return: An object of type ``numpy.ndarray`` corresponding to an RGB image of the atomic image regions.
 
     .. hlist::
@@ -221,11 +221,11 @@ def render_foreground_clusters(data, normalize_img=True, discarded_color=(0.3, 1
     """Returns a visualization of regions of possibly clustered objects (see :ref:`pipeline_theory_jointsegandclustersplit`).
 
     :param data: The pipeline data object.
-    :param normalize_img: ``True`` if contrast-enhancement should be performed and ``False`` otherwise. Only used if ``override_img`` is ``None``.
+    :param normalize_img: `True` if contrast-enhancement should be performed and `False` otherwise. Only used if ``override_img`` is `None`.
     :param discarded_color: The color of image regions which are entirely discarded from processing (RGBA).
     :param border_radius: The half width of the borders of the regions of possibly clustered objects.
     :param border_color: The color of the borders of the regions of possibly clustered objects (RGB).
-    :param override_img: The image on top of which the borders of the regions of possibly clustered objects are to be rendered. If ``None``, the (contrast-enhanced) raw image itensities will be used.
+    :param override_img: The image on top of which the borders of the regions of possibly clustered objects are to be rendered. If `None`, the (contrast-enhanced) raw image itensities will be used.
     :return: An object of type ``numpy.ndarray`` corresponding to an RGB image of the regions of possibly clustered objects.
 
     .. hlist::
@@ -251,7 +251,7 @@ def rasterize_regions(regions, background_label=None, radius=3):
     :param regions: Integer-valued image (object of ``numpy.ndarray`` type) corresponding to the labels of different image regions.
     :param background_label: A designated label value, which is to be treated as the ``image background``.
     :param radius: The half width of the borders.
-    :return: Tuple of the structure ``(borders, background)``, where ``borders`` is a binary mask of the borders of the image regions, and ``background`` is a binary mask of the union of those regions corresponding to the ``background_label``, if this is not ``None``. Otherwise, ``background`` is an binary mask filled with ``False`` values.
+    :return: Tuple of the structure ``(borders, background)``, where ``borders`` is a binary mask of the borders of the image regions, and ``background`` is a binary mask of the union of those regions corresponding to the ``background_label``, if this is not `None`. Otherwise, ``background`` is an binary mask filled with `False` values.
     """
     borders = np.zeros(regions.shape, bool)
     background = np.zeros(regions.shape, bool)
@@ -271,7 +271,7 @@ def render_regions_over_image(img, regions, background_label=None, color=(0,1,0)
     :param regions: Integer-valued image (object of ``numpy.ndarray`` type) corresponding to the labels of different image regions.
     :param background_label: A designated label value, which is to be treated as the image background.
     :param color: The color of the borders of the image regions (RGB).
-    :param bg: The color of the image regions corresponding to the image background (RGBA). Only used if ``background_label`` is not ``None``.
+    :param bg: The color of the image regions corresponding to the image background (RGBA). Only used if ``background_label`` is not `None`.
     :param kwargs: Keyword arguments passed to the :py:meth:`~.rasterize_regions` function.
     :return: An object of type ``numpy.ndarray`` corresponding to an RGB image of the image regions.
     """
@@ -333,10 +333,10 @@ def render_result_over_image(data, objects='postprocessed_objects', merge_overla
     :param data: The pipeline data object.
     :param objects: Either the name of the output which is to be treated as the segmentation result (see :ref:`pipeline_inputs_and_outputs`), or a list of :py:class:`~superdsm.objects.BaseObject` instances.
     :param merge_overlap_threshold: Any pair of two objects with an overlap larger than this threshold will be merged into a single object.
-    :param normalize_img: ``True`` if contrast-enhancement should be performed and ``False`` otherwise. Only used if ``override_img`` is ``None``.
+    :param normalize_img: `True` if contrast-enhancement should be performed and `False` otherwise. Only used if ``override_img`` is `None`.
     :param border_width: The width of the contour to be drawn around the segmented objects.
     :param border_position: The position of the contour to be drawn around the segmented objects (``inner``, ``center``, or ``outer``).
-    :param override_img: The image on top of which the contours of the segmented objects are to be rendered. If ``None``, the (contrast-enhanced) raw image itensities will be used.
+    :param override_img: The image on top of which the contours of the segmented objects are to be rendered. If `None`, the (contrast-enhanced) raw image itensities will be used.
     :param color: The color of the contour to be drawn around the segmented objects (``r`` for red, ``g`` for green, ``b`` for blue, ``y`` for yellow, ``t`` for teal, or ``w`` for white).
     :return: An object of type ``numpy.ndarray`` corresponding to an RGB image of the segmentation result.
 
@@ -457,7 +457,7 @@ def shuffle_labels(labels, bg_label=None, seed=None):
     """Randomly shuffles the values of an integer-valued image.
 
     :param labels: An object of type ``numpy.ndarray`` corresponding to labeled segmentation masks.
-    :param bg_label: If not ``None``, then this label stays fixed.
+    :param bg_label: If not `None`, then this label stays fixed.
     :param seed: The seed used for randomization.
     :return: An object of type ``numpy.ndarray`` corresponding to ``labels`` with shuffled values (labels).
     """
@@ -482,7 +482,7 @@ def colorize_labels(labels, bg_label=0, cmap='gist_rainbow', bg_color=(0,0,0), s
     :param bg_label: Image areas with this label are forced to the color ``bg_color``.
     :param cmap: The colormap used to colorize the remaining labels (see `the list <https://matplotlib.org/stable/tutorials/colors/colormaps.html>`_).
     :param bg_color: The color used to represent the image regions with label ``bg_label`` (RGB).
-    :param shuffle: If not ``None``, then used as ``seed`` to shuffle the labels before colorization (see :py:meth:`~.shuffle_labels`), and not used otherwise.
+    :param shuffle: If not `None`, then used as ``seed`` to shuffle the labels before colorization (see :py:meth:`~.shuffle_labels`), and not used otherwise.
     :return: An object of type ``numpy.ndarray`` corresponding to an RGB image.
 
     .. hlist::

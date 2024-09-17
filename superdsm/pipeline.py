@@ -61,7 +61,7 @@ class LoadInput(repype.stage.Stage):
     Loads the input image into the pipeline.
 
     The loaded image ``g_raw`` is made available as an input to the subsequent pipeline stages. However, if
-    ``config['histological'] == True`` (i.e. the hyperparameter ``histological`` is set to ``True``), then ``g_raw`` is
+    ``config['histological'] == True`` (i.e. the hyperparameter ``histological`` is set to `True`), then ``g_raw`` is
     converted to a brightness-inverse intensity image, and the original image is provided as ``g_rgb`` to the stages of
     the pipeline.
 

@@ -36,7 +36,7 @@ class Postprocessing(repype.stage.Stage):
         Objects with a normalized energy larger than this value are discarded. Corresponds to *max_norm_energy2* in :ref:`Kostrykin and Rohr (TPAMI 2023 <references>`, Supplemental Material 8, also incorrectly referred to as *min_norm_energy2* in Supplemental Material 7 due to a typo). Defaults to 0.2.
 
     ``postprocess/discard_image_boundary``
-        Objects located directly on the image border are discarded if this is set to ``True``. Defaults to ``False``.
+        Objects located directly on the image border are discarded if this is set to `True`. Defaults to `False`.
 
     ``postprocess/min_object_radius``
         Objects smaller than a circle of this radius are discarded (in terms of the surface area). Defaults to 0, or to ``AF_min_object_radius × radius`` if configured automatically (and ``AF_min_object_radius`` defaults to zero).
@@ -89,7 +89,7 @@ class Postprocessing(repype.stage.Stage):
         Corresponds to the scale of the Gaussian filter used to smooth the image intensities for refinement of the segmentation mask. Defaults to 3.
 
     ``postprocess/fill_holes``
-        Morphological holes in the segmentation mask are filled if set to ``True``. Defaults to ``True``.
+        Morphological holes in the segmentation mask are filled if set to `True`. Defaults to `True`.
 
     Autofluorescence glare removal
     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
