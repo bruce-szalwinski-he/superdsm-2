@@ -245,3 +245,4 @@ dependencies:
   - requests==2.32.3
   - rpds-py==0.20.0
   - urllib3==2.2.2
+  - repype==1.0.0

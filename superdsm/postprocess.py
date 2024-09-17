@@ -1,17 +1,25 @@
-from .pipeline import Stage
-from .objects import BaseObject, extract_foreground_fragment
-from ._aux import get_ray_1by1, join_path
+import math
+import os
 
-import scipy.ndimage      as ndi
-import skimage.morphology as morph
-import skimage.measure
-
-import ray
-import math, os
 import numpy as np
+import ray
+import repype.stage
+import repype.status
+import scipy.ndimage as ndi
+import skimage.measure
+import skimage.morphology as morph
+
+from ._aux import (
+    get_ray_1by1,
+    join_path,
+)
+from .objects import (
+    BaseObject,
+    extract_foreground_fragment,
+)
 
 
-class Postprocessing(Stage):
+class Postprocessing(repype.stage.Stage):
     """Discards spurious objects and refines the segmentation masks as described in Section 3.4 and Supplemental Material 7 of :ref:`Kostrykin and Rohr (TPAMI 2023) <references>`.
 
     This stage requires ``g_raw``, ``cover``, ``y_img`, ``atoms``, ``dsm_cfg`` for input and produces ``postprocessed_objects`` for output. Refer to :ref:`pipeline_inputs_and_outputs` for more information on the available inputs and outputs.
@@ -109,56 +117,55 @@ class Postprocessing(Stage):
         Overrides ``postprocess/min_glare_radius`` for objects located directly on the image border. Defaults to the value of the ``postprocess/min_glare_radius`` hyperparameter.
     """
 
-    ENABLED_BY_DEFAULT = True
+    id = 'postprocess'
+    inputs  = ['cover', 'y_img', 'atoms', 'g_raw', 'dsm_cfg']
+    outputs = ['postprocessed_objects']
 
-    def __init__(self):
-        super(Postprocessing, self).__init__('postprocess',
-                                             inputs  = ['cover', 'y_img', 'atoms', 'g_raw', 'dsm_cfg'],
-                                             outputs = ['postprocessed_objects'])
-
-    def process(self, input_data, cfg, out, log_root_dir):
+    def process(self, cover, y_img, atoms, g_raw, dsm_cfg, pipeline, config, status=None, log_root_dir=None):
+        status = repype.status.derive(status)
+        
         # simple post-processing
-        max_norm_energy           = cfg.get(          'max_norm_energy',    0.2)
-        discard_image_boundary    = cfg.get(   'discard_image_boundary',  False)
-        min_boundary_obj_radius   = cfg.get(  'min_boundary_obj_radius',      0)
-        min_obj_radius            = cfg.get(        'min_object_radius',      0)
-        max_obj_radius            = cfg.get(        'max_object_radius', np.inf)
-        max_eccentricity          = cfg.get(         'max_eccentricity',   0.99)
-        max_boundary_eccentricity = cfg.get('max_boundary_eccentricity', np.inf)
+        max_norm_energy           = config.get(          'max_norm_energy',    0.2)
+        discard_image_boundary    = config.get(   'discard_image_boundary',  False)
+        min_boundary_obj_radius   = config.get(  'min_boundary_obj_radius',      0)
+        min_obj_radius            = config.get(        'min_object_radius',      0)
+        max_obj_radius            = config.get(        'max_object_radius', np.inf)
+        max_eccentricity          = config.get(         'max_eccentricity',   0.99)
+        max_boundary_eccentricity = config.get('max_boundary_eccentricity', np.inf)
         if max_boundary_eccentricity is None: max_boundary_eccentricity = max_eccentricity
 
         # contrast-based post-processing
-        exterior_scale   = cfg.get(  'exterior_scale',    5)
-        exterior_offset  = cfg.get( 'exterior_offset',    5)
-        min_contrast     = cfg.get(    'min_contrast', 1.35)
-        contrast_epsilon = cfg.get('contrast_epsilon', 1e-4)
+        exterior_scale   = config.get(  'exterior_scale',    5)
+        exterior_offset  = config.get( 'exterior_offset',    5)
+        min_contrast     = config.get(    'min_contrast', 1.35)
+        contrast_epsilon = config.get('contrast_epsilon', 1e-4)
 
         # mask-based post-processing
-        mask_stdamp          = cfg.get(      'mask_stdamp',    2)
-        mask_max_distance    = cfg.get('mask_max_distance',    1)
-        mask_smoothness      = cfg.get(  'mask_smoothness',    3)
-        fill_holes           = cfg.get(       'fill_holes', True)
+        mask_stdamp          = config.get(      'mask_stdamp',    2)
+        mask_max_distance    = config.get('mask_max_distance',    1)
+        mask_smoothness      = config.get(  'mask_smoothness',    3)
+        fill_holes           = config.get(       'fill_holes', True)
 
         # autofluorescence glare removal
-        glare_detection_smoothness = cfg.get('glare_detection_smoothness',      3)
-        glare_detection_num_layers = cfg.get('glare_detection_num_layers',      5)
-        glare_detection_min_layer  = cfg.get( 'glare_detection_min_layer',    0.5)
-        min_glare_radius           = cfg.get(          'min_glare_radius', np.inf)
-        min_boundary_glare_radius  = cfg.get( 'min_boundary_glare_radius', min_glare_radius)
+        glare_detection_smoothness = config.get('glare_detection_smoothness',      3)
+        glare_detection_num_layers = config.get('glare_detection_num_layers',      5)
+        glare_detection_min_layer  = config.get( 'glare_detection_min_layer',    0.5)
+        min_glare_radius           = config.get(          'min_glare_radius', np.inf)
+        min_boundary_glare_radius  = config.get( 'min_boundary_glare_radius', min_glare_radius)
 
         # mask image pixels allowed for estimation of mean background intesity during contrast computation
-        background_mask = np.zeros(input_data['g_raw'].shape, bool)
-        for c in input_data['cover'].solution:
+        background_mask = np.zeros(g_raw.shape, bool)
+        for c in cover.solution:
             c.fill_foreground(background_mask)
         background_mask = morph.binary_erosion(~background_mask, morph.disk(exterior_offset))
 
         params = {
-            'y':                          input_data['y_img'],
-            'g':                          input_data['g_raw'],
-            'atoms':                      input_data['atoms'],
-            'background_margin':          input_data['dsm_cfg']['background_margin'],
-            'g_mask_processing':          ndi.gaussian_filter(input_data['g_raw'], mask_smoothness),
-            'g_glare_detection':          ndi.gaussian_filter(input_data['g_raw'], glare_detection_smoothness),
+            'y':                          y_img,
+            'g':                          g_raw,
+            'atoms':                      atoms,
+            'background_margin':          dsm_cfg['background_margin'],
+            'g_mask_processing':          ndi.gaussian_filter(g_raw, mask_smoothness),
+            'g_glare_detection':          ndi.gaussian_filter(g_raw, glare_detection_smoothness),
             'background_mask':            background_mask,
             'exterior_scale':             exterior_scale,
             'exterior_offset':            exterior_offset,
@@ -172,7 +179,7 @@ class Postprocessing(Stage):
             'glare_detection_num_layers': glare_detection_num_layers,
         }
 
-        objects    = [obj for obj in input_data['cover'].solution if c.fg_fragment.any()]
+        objects    = [obj for obj in cover.solution if c.fg_fragment.any()]
         params_id  = ray.put(params)
         futures    = [_process_object.remote(obj_idx, obj, params_id) for obj_idx, obj in enumerate(objects)]
 
@@ -217,7 +224,7 @@ class Postprocessing(Stage):
                     continue
 
             postprocessed_objects.append(object)
-            out.intermediate(f'Post-processing objects... {ret_idx + 1} / {len(futures)}')
+            repype.status.update(status, f'Post-processing objects... {ret_idx + 1} / {len(futures)}', intermediate=True)
 
         if log_root_dir is not None:
             log_filename = join_path(log_root_dir, 'postprocessing.txt')
@@ -227,13 +234,13 @@ class Postprocessing(Stage):
                     log_line = f'object at x={location[1]}, y={location[0]}: {comment}'
                     log_file.write(f'{log_line}{os.linesep}')
 
-        out.write(f'Remaining objects: {len(postprocessed_objects)} of {len(objects)}')
+        repype.status.update(status, f'Remaining objects: {len(postprocessed_objects)} of {len(objects)}')
 
         return {
             'postprocessed_objects': postprocessed_objects
         }
 
-    def configure_ex(self, scale, radius, diameter):
+    def configure(self, pipeline, input_id, *args, radius, **kwargs):
         return {
             'min_object_radius': (radius, 0.0),
             'max_object_radius': (radius, np.inf),

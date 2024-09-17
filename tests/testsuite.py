@@ -1,13 +1,14 @@
+import json
 import os
 import pathlib
-import requests
-import tempfile
 import shutil
-import json
+import tempfile
 import warnings
+
 import numpy as np
+import requests
+
 import superdsm.io
-import superdsm.output
 
 requests.packages.urllib3.disable_warnings()
 
@@ -76,62 +77,3 @@ def without_resource_warnings(test_func):
             warnings.simplefilter('ignore', ResourceWarning)
             test_func(self, *args, **kwargs)
     return do_test
-
-
-class DeferredOutput(superdsm.output.Output):
-
-    def __init__(self, original, muted=False, parent=None, margin=0):
-        super(DeferredOutput, self).__init__(parent, muted, margin)
-        assert parent is None or isinstance(parent, DeferredOutput)
-        self.original = original
-        if parent is None:
-            self._intermediate = None
-            self._lines = list()
-
-    @property
-    def _root(self):
-        if self.parent is None: return self
-        else: return self.parent._find_root()
-
-    def intermediate(self, line):
-        if not self.muted:
-            self._root._intermediate = ' ' * self.margin + line
-    
-    def write(self, line):
-        if not self.muted:
-            self._root._intermediate = None
-            self._root._lines.append(' ' * self.margin + line)
-    
-    def derive(self, muted=False, margin=0):
-        assert margin >= 0
-        return DeferredOutput(self.original, muted, self, self.margin + margin)
-    
-    def forward(self):
-        assert self.parent is None
-        for line in self._lines:
-            self.original.write(line)
-        if self._intermediate is not None:
-            self.original.write(self._intermediate)
-
-    def write_to_file(self, file):
-        if hasattr(file, 'write'):
-            file.write('\n'.join(self._lines))
-        else:
-            with open(str(file), 'w') as fout:
-                self.write_to_file(fout)
-
-
-class SilentOutputContext:
-
-    def __init__(self, out=None, **kwargs):
-        out = superdsm.output.get_output(out)
-        self.output = DeferredOutput(out, **kwargs)
-        self.output.write('')
-
-    def __enter__(self):
-        return self.output
-    
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if exc_type is not None:
-            self.output.forward()
-    

@@ -1,8 +1,6 @@
-from .output import get_output
-
 import numpy as np
+import repype.status
 import skimage.morphology as morph
-import skimage.segmentation
 
 
 def _find_seed_of_region(region, seeds):
@@ -48,8 +46,7 @@ class AtomAdjacencyGraph:
        >>> adj[4]
     """
 
-    def __init__(self, atoms, clusters, fg_mask, seeds, out=None):
-        out = get_output(out)
+    def __init__(self, atoms, clusters, fg_mask, seeds, status=None):
         self._adjacencies, se = {atom_label: set() for atom_label in range(1, atoms.max() + 1)}, morph.disk(1)
         self._atoms_by_cluster = dict()
         self._cluster_by_atom  = dict()
@@ -70,8 +67,8 @@ class AtomAdjacencyGraph:
             self._cluster_by_atom[l0] = cluster_label
             self._atoms_by_cluster[cluster_label] |= {l0}
             self._seeds[l0] = _find_seed_of_region(atoms == l0, seeds)
-            out.intermediate('Processed atom %d / %d' % (l0, atoms.max()))
-        out.write('Computed adjacency graph')
+            repype.status.update(status, 'Processed atom %d / %d' % (l0, atoms.max()), intermediate=True)
+        repype.status.update(status, 'Computed adjacency graph')
         assert self._is_symmetric()
     
     def __getitem__(self, atom_label):

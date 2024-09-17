@@ -2,6 +2,9 @@
 /build
 *.swp
 .DS_Store
+._.DS_Store
+/actual_csv
+/examples.regression
 /examples/**/*.csv
 /examples/**/*.gz
 /examples/**/.*.json
@@ -15,3 +18,5 @@
 /tests/data
 /tests/actual
 /tests/logs
+/.venv
+/docs/build

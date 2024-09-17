@@ -24,13 +24,13 @@ To run SuperDSM from command line, use:
 
 .. code-block:: console
 
-   python -m 'superdsm.batch' --help
+   python -m superdsm --help
 
-To export (intermediate) results, use:
+To run the interactive text-based user interface, use:
 
 .. code-block:: console
 
-   python -m 'superdsm.export' --help
+   python -m superdsm.textual
 
 For details, see :ref:`batch_system`.
 
@@ -43,30 +43,30 @@ To use SuperDSM interactively, i.e. programatically as opposed to batch processi
 
 .. code-block:: python
 
-   import ray
-   ray.init(num_cpus=16, log_to_driver=False, logging_level='error')
+    import ray
+    ray.init(num_cpus=16, log_to_driver=False, logging_level='error')
 
 After this initialization routine, SuperDSM is ready to use:
 
 .. code-block:: python
 
-    import superdsm.automation
-    pipeline = superdsm.pipeline.create_default_pipeline()
-    cfg = superdsm.config.Config()
-    data, _, _ = superdsm.automation.process_image(pipeline, cfg, img)
+    import superdsm
+    pipeline = superdsm.Pipeline()
+    cfg = superdsm.Config()
+    data, _, _ = pipeline.process_image(img, cfg)
 
-In this example, the default set of hyperparameters will be used. The parameters can be changed using the ``cfg`` object (see the :py:class:`~superdsm.config.Config` class API). The available hyperparameters are described in the documentation of the respective stages employed in the pipeline created by the :py:meth:`~superdsm.pipeline.create_default_pipeline` function.
+In this example, the default set of hyperparameters will be used. The parameters can be changed using the ``cfg`` object (see the :py:class:`repype.config.Config` class API). The available hyperparameters are described in the documentation of the respective stages employed in the pipeline.
 
 The variable ``img`` must be a two-dimensional ``numpy.ndarray`` object which represents the raw image intensities. Images can be loaded from file using :py:meth:`~superdsm.io.imread`.
 
-The pipeline data object ``data`` is a dictionary containing all the intermediate results which might be necessary for further computations. This can also be used to obtain a graphical representation of the segmentation results:
+The *pipeline data object* ``data`` is a dictionary containing all the intermediate results which might be necessary for further computations. This can also be used to obtain a graphical representation of the segmentation results:
 
 .. code-block:: python
 
     import superdsm.render
     seg = superdsm.render.render_result_over_image(data)
 
-The ``seg`` object returned by the :py:meth:`~superdsm.render.render_result_over_image` function is an RGB image (represented by a ``numpy.ndarray`` object) which can be visualized directly (e.g., using matplotlib) or saved for later use (e.g., using :py:meth:`~superdsm.io.imwrite`). Use :py:meth:`~superdsm.render.rasterize_labels` to obtain segmentation masks from the pipeline data object.
+The ``seg`` object returned by the :py:meth:`~superdsm.render.render_result_over_image` function is an RGB image (represented by a ``numpy.ndarray`` object) which can be visualized directly (e.g., using matplotlib) or saved for later use (e.g., using :py:meth:`~superdsm.io.imsave`). Use :py:meth:`~superdsm.render.rasterize_labels` to obtain segmentation masks from the pipeline data object.
 
 .. _env_variables:
 
@@ -77,9 +77,9 @@ MKL_DEBUG_CPU_TYPE
 
     To take advantage of the acceleration provided by MKL on AMD CPUs, the environment variable ``MKL_DEBUG_CPU_TYPE=5`` should be set when using an AMD CPU. This usually happens automatically, unless automatic recognition of the CPU vendor fails (and a warning is shown).
 
-SUPERDSM_INTERMEDIATE_OUTPUT
+REPYPE_CLI_INTERMEDIATE
 
-   Set ``SUPERDSM_INTERMEDIATE_OUTPUT=0`` to mute the intermediate console output.
+   Set ``REPYPE_CLI_INTERMEDIATE=0`` to mute the intermediate console output.
 
 SUPERDSM_NUM_CPUS
 

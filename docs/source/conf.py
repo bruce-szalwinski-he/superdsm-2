@@ -6,6 +6,11 @@ project = 'SuperDSM'
 copyright = '2017-2024 Leonid Kostrykin, Biomedical Computer Vision Group, Heidelberg University'
 author = 'Leonid Kostrykin'
 
+# -- Add directory which contains the project to sys.path
+import os, sys
+sys.path.insert(0, os.path.abspath('../..'))
+os.environ['PYTHONPATH'] = os.path.abspath('../..') + ':' + os.environ.get('PYTHONPATH', '')
+
 # -- General configuration
 
 extensions = [
@@ -14,12 +19,14 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
+    'sphinx.ext.napoleon',
     'sphinx_autorun',
 ]
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
     'sphinx': ('https://www.sphinx-doc.org/en/master/', None),
+    'repype': ('https://repype.readthedocs.io/en/stable/', None),
 }
 intersphinx_disabled_domains = ['std']
 

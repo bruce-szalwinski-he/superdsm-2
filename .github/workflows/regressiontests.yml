@@ -58,10 +58,10 @@ jobs:
 
       - name: Run SuperDSM
         run: |
-            python -m "superdsm.batch" examples --task-dir "${{ matrix.taskdir }}"
-            python -m "superdsm.batch" examples --task-dir "${{ matrix.taskdir }}" --run
+            python -m "superdsm" examples --task-dir "examples/${{ matrix.taskdir }}"
+            python -m "superdsm" examples --task-dir "examples/${{ matrix.taskdir }}" --run
         env:
-          SUPERDSM_INTERMEDIATE_OUTPUT: false
+          REPYPE_CLI_INTERMEDIATE: false
           SUPERDSM_NUM_CPUS: 20
 
       - name: Validate results

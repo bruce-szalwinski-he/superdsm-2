@@ -1,21 +1,32 @@
-from .pipeline import Stage
-from ._aux import get_ray_1by1, copy_dict
-from .objects import cvxprog, Object
+import contextlib
+import hashlib
+import math
+import queue
+
+import numpy as np
+import ray
+import repype.stage
+import repype.status
+import scipy.ndimage as ndi
+import skimage.morphology as morph
+import skimage.segmentation as segm
+
+from ._aux import (
+    copy_dict,
+    get_ray_1by1,
+)
 from .atoms import AtomAdjacencyGraph
 from .image import Image
-
-import ray
-import scipy.ndimage as ndi
-import numpy as np
-import skimage.segmentation as segm
-import skimage.morphology as morph
-import queue, contextlib, math, hashlib
+from .objects import (
+    Object,
+    cvxprog,
+)
 
 
 def _get_next_seed(region, where, score_func, connectivity=4):
     if   connectivity == 4: footprint = morph.disk(1)
     elif connectivity == 8: footprint = np.ones((3,3))
-    else: raise ValeError(f'unknown connectivity: {connectivity}')
+    else: raise ValueError(f'unknown connectivity: {connectivity}')
     mask  = np.logical_and(region.mask, where)
     image = region.model
     image_max = ndi.maximum_filter(image, footprint=footprint)
@@ -79,8 +90,9 @@ def _get_cached_normalized_energy_computer(y, cluster):
     return compute_normalized_energy
 
 
-class C2F_RegionAnalysis(Stage):
-    """Implements the :ref:`pipeline_theory_c2freganal` scheme.
+class C2F_RegionAnalysis(repype.stage.Stage):
+    """
+    Implements the :ref:`pipeline_theory_c2freganal` scheme.
 
     This stage requires ``y`` and ``dsm_cfg`` for input and produces ``y_mask``, ``atoms``, ``adjacencies``, ``seeds``, ``clusters`` for output. Refer to :ref:`pipeline_inputs_and_outputs` for more information on the available inputs and outputs.
 
@@ -105,28 +117,25 @@ class C2F_RegionAnalysis(Stage):
         Threshold for the "irregularity" of image regions, which is used to determine the output ``y_mask``. Image regions with an "irregularity" higher than this value are masked as "empty" image regions and discarded from further considerations. This is the threshold for the P/A ratio described in :ref:`Kostrykin and Rohr (TPAMI 2023, <references>` see Section 3.1 and *max_pa_ratio* in Supplemental Material 8). Defaults to 0.2.
 
     .. note::
-       This stage takes the DSM-related hyperparameters as an input. Due to a bug in the original implementation, the value set for the hyperparameter ``dsm/background_margin`` was disrespected and a value of 20 was always used instead. However, the impact on the results is only subtle. Having this issue fixed, the results are mostly consistent with those originally reported in :ref:`Kostrykin and Rohr (TPAMI 2023, <references>` the hyperparameter :math:`\\alpha` is changed from 0.1 to 0.2 for the GOWT1-2 dataset when using SuperDSM*, see the ``examples/GOWT1-2/default/adapted/task.json`` file).
+       This stage takes the DSM-related hyperparameters as an input. Due to a bug in the original implementation, the value set for the hyperparameter ``dsm/background_margin`` was disrespected and a value of 20 was always used instead. However, the impact on the results is only subtle. Having this issue fixed, the results are mostly consistent with those originally reported in :ref:`Kostrykin and Rohr (TPAMI 2023, <references>` the hyperparameter :math:`\\alpha` is changed from 0.1 to 0.2 for the GOWT1-2 dataset when using SuperDSM, see the ``examples/GOWT1-2/default/adapted/task.json`` file).
     """
 
-    ENABLED_BY_DEFAULT = True
+    id = 'c2f-region-analysis'
+    inputs  = ['y', 'dsm_cfg']
+    outputs = ['y_mask', 'atoms', 'adjacencies', 'seeds', 'clusters']
 
-    def __init__(self):
-        super(C2F_RegionAnalysis, self).__init__('c2f-region-analysis',
-                                                 inputs  = ['y', 'dsm_cfg'],
-                                                 outputs = ['y_mask', 'atoms', 'adjacencies', 'seeds', 'clusters'])
+    def process(self, y, dsm_cfg, pipeline, config, status=None):
+        seed_connectivity = config.get('seed_connectivity', 8)
+        min_atom_radius = config.get('min_atom_radius', 15)
+        max_atom_norm_energy = config.get('max_atom_norm_energy', 0.05)
+        min_norm_energy_improvement = config.get('min_norm_energy_improvement', 0.1)
+        max_cluster_marker_irregularity = config.get('max_cluster_marker_irregularity', 0.2)
 
-    def process(self, input_data, cfg, out, log_root_dir):
-        seed_connectivity = cfg.get('seed_connectivity', 8)
-        min_atom_radius = cfg.get('min_atom_radius', 15)
-        max_atom_norm_energy = cfg.get('max_atom_norm_energy', 0.05)
-        min_norm_energy_improvement = cfg.get('min_norm_energy_improvement', 0.1)
-        max_cluster_marker_irregularity = cfg.get('max_cluster_marker_irregularity', 0.2)
-
-        dsm_cfg = copy_dict(input_data['dsm_cfg'])
+        dsm_cfg = copy_dict(dsm_cfg)
         dsm_cfg['smooth_amount'] = np.inf
         
-        out.intermediate(f'Analyzing cluster markers...')
-        y = Image.create_from_array(input_data['y'], normalize=False)
+        repype.status.update(status, f'Analyzing cluster markers...', intermediate=True)
+        y = Image.create_from_array(y, normalize=False)
         fg_mask = (y.model > 0)
         fg_bd   = np.logical_xor(fg_mask, morph.binary_erosion(fg_mask, morph.disk(1)))
         y_mask  = np.ones(y.model.shape, bool)
@@ -139,7 +148,7 @@ class C2F_RegionAnalysis(Stage):
                 
         cluster_markers[~y_mask] = cluster_markers.min()
         cluster_markers = _normalize_labels_map(cluster_markers, first_label=0)[0]
-        out.write(f'Extracted {cluster_markers.max()} cluster markers')
+        repype.status.update(status, f'Extracted {cluster_markers.max()} cluster markers')
         
         clusters  = segm.watershed(ndi.distance_transform_edt(cluster_markers == 0), markers=cluster_markers)
         atoms_map = np.full(y.model.shape, 0)
@@ -160,16 +169,16 @@ class C2F_RegionAnalysis(Stage):
             for atom_candidate in cluster_atoms:
                 atom_candidate_by_label[cluster_label_offset + list(atom_candidate.footprint)[0]] = atom_candidate
                 atom_candidate.seed = np.round(ndi.center_of_mass(atom_candidate.seed)).astype(int) + cluster.offset
-            out.intermediate(f'Analyzing clusters... {ret_idx + 1} / {len(futures)}')
+            repype.status.update(status, f'Analyzing clusters... {ret_idx + 1} / {len(futures)}', intermediate=True)
             
         atoms_map, label_translation = _normalize_labels_map(atoms_map, first_label=1, skip_labels=[0])
         for old_label, atom_candidate in dict(atom_candidate_by_label).items():
             atom_candidate_by_label[label_translation[old_label]] = atom_candidate
-        out.write(f'Extracted {atoms_map.max()} atoms (max energy rate: {max_normalized_energy:g})')
+        repype.status.update(status, f'Extracted {atoms_map.max()} atoms (max energy rate: {max_normalized_energy:g})')
         
         # Compute adjacencies graph
         atom_nodes  = [atom_candidate_by_label[atom_label].seed for atom_label in sorted(label_translation.values())]
-        adjacencies = AtomAdjacencyGraph(atoms_map, clusters, fg_mask, atom_nodes, out)
+        adjacencies = AtomAdjacencyGraph(atoms_map, clusters, fg_mask, atom_nodes, status)
         
         return {
             'y_mask': y_mask,
@@ -179,7 +188,7 @@ class C2F_RegionAnalysis(Stage):
             'clusters': clusters
         }
 
-    def configure_ex(self, scale, radius, diameter):
+    def configure(self, pipeline, input_id, *args, radius, **kwargs):
         return {
             'min_atom_radius': (radius, 0.33, dict(type=int)),
         }

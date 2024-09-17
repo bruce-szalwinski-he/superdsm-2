@@ -1,7 +1,5 @@
-from .pipeline import Stage
-
 import numpy as np
-
+import repype.stage
 
 DSM_CONFIG_DEFAULTS = {
     'cachesize': 1,
@@ -20,7 +18,7 @@ DSM_CONFIG_DEFAULTS = {
 }
 
 
-class DSM_Config(Stage):
+class DSM_Config(repype.stage.Stage):
     """Fetches the hyperparameters from the ``dsm`` namespace and provides them as an output.
 
     The purpose of this stage is to provide the hyperparameters from the ``dsm`` namespace as the output ``dsm_cfg``, which is a dictionary of the hyperparameters without the leading ``dsm/`` namespace prefix. This enables any stage to access the DSM-related hyperparameters, like the :py:class:`~.c2freganal.C2F_RegionAnalysis` and :py:class:`~.globalenergymin.GlobalEnergyMinimization` stages, without having to access the ``dsm`` hyperparameter namespace. Refer to :ref:`pipeline_inputs_and_outputs` for more information on the available inputs and outputs.
@@ -70,25 +68,21 @@ class DSM_Config(Stage):
         The maximum run time of convex programming for each object (in seconds). The convex optimization will be interrupted if it takes longer than that (the :py:meth:`~superdsm.objects.cvxprog` function will report the status ``fallback`` in this case). If this is set to ``None``, the run time is not limited. Defaults to 300 (i.e. 5 minutes).
     """
 
-    ENABLED_BY_DEFAULT = True
+    id = 'dsm'
+    outputs = ['dsm_cfg']
 
-    def __init__(self):
-        super(DSM_Config, self).__init__('dsm', inputs=[], outputs=['dsm_cfg'])
-
-    def process(self, input_data, cfg, out, log_root_dir):
+    def process(self, pipeline, config, status=None):
         dsm_cfg = {
-            key: cfg.get(key, DSM_CONFIG_DEFAULTS[key]) for key in DSM_CONFIG_DEFAULTS.keys()
+            key: config.get(key, DSM_CONFIG_DEFAULTS[key]) for key in DSM_CONFIG_DEFAULTS.keys()
         }
-        
         return {
             'dsm_cfg': dsm_cfg
         }
 
-    def configure_ex(self, scale, radius, diameter):
+    def configure(self, pipeline, input_id, *args, scale, **kwargs):
         return {
             'alpha': (scale ** 2, 0.0005),
             'smooth_amount':     (scale, 0.2, dict(type=int, min=4)),
             'smooth_subsample':  (scale, 0.4, dict(type=int, min=8)),
             'background_margin': (scale, 0.4, dict(type=int, min=8)),
         }
-

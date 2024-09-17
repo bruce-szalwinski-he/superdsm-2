@@ -1,12 +1,28 @@
-from ._aux import copy_dict, uplift_smooth_matrix, join_path, SystemSemaphore, get_ray_1by1
-from .output import get_output
-from .dsm import DeformableShapeModel, CP, SmoothMatrixFactory, Energy
+import contextlib
+import io
+import sys
+import time
+import traceback
 
-import ray
-import sys, io, contextlib, traceback, time
-import scipy.ndimage as ndi
 import numpy as np
+import ray
+import repype.status
+import scipy.ndimage as ndi
 import skimage.morphology as morph
+
+from ._aux import (
+    SystemSemaphore,
+    copy_dict,
+    get_ray_1by1,
+    join_path,
+    uplift_smooth_matrix,
+)
+from .dsm import (
+    CP,
+    DeformableShapeModel,
+    Energy,
+    SmoothMatrixFactory,
+)
 
 
 class BaseObject:
@@ -240,7 +256,7 @@ def _compute_object_logged(log_root_dir, cidx, *args, **kwargs):
 DEFAULT_COMPUTING_STATUS_LINE = ('Computing objects', 'Computed objects')
 
 
-def compute_objects(objects, y, atoms, dsm_cfg, log_root_dir, status_line=DEFAULT_COMPUTING_STATUS_LINE, out=None):
+def compute_objects(objects, y, atoms, dsm_cfg, log_root_dir, status_line=DEFAULT_COMPUTING_STATUS_LINE, status=None):
     """Computes the attributes of a list of objects.
 
     The computation concerns the attributes :py:attr:`~Object.energy`, :py:attr:`~Object.on_boundary`, :py:attr:`~Object.is_optimal`, :py:attr:`~Object.processing_time`, :py:attr:`~BaseObject.fg_fragment`, :py:attr:`~BaseObject.fg_offset` of the objects.
@@ -253,7 +269,6 @@ def compute_objects(objects, y, atoms, dsm_cfg, log_root_dir, status_line=DEFAUL
     :param status_line: Tuple ``(s1, s2)``, where ``s1`` is the line of text to be written while objects are being computed, and ``s2`` is the line of text to be written when finished.
     :param out: An instance of an :py:class:`~superdsm.output.Output` sub-class, ``'muted'`` if no output should be produced, or ``None`` if the default output should be used.
     """
-    out = get_output(out)
     dsm_cfg = copy_dict(dsm_cfg)
     smooth_mat_max_allocations = dsm_cfg.pop('smooth_mat_max_allocations', np.inf)
     with SystemSemaphore('smooth-matrix-allocation', smooth_mat_max_allocations) as smooth_mat_allocation_lock:
@@ -262,9 +277,9 @@ def compute_objects(objects, y, atoms, dsm_cfg, log_root_dir, status_line=DEFAUL
         x_map      = y.get_map(normalized=False, pad=1)
         for ret_idx, ret in enumerate(_compute_objects(objects, y, atoms, x_map, smooth_mat_allocation_lock, dsm_cfg, log_root_dir)):
             objects[ret[0]].set(ret[1])
-            out.intermediate(f'{status_line[0]}... {ret_idx + 1} / {len(objects)} ({fallbacks}x fallback)')
+            repype.status.update(status, f'{status_line[0]}... {ret_idx + 1} / {len(objects)} ({fallbacks}x fallback)', intermediate=True)
             if ret[2]: fallbacks += 1
-    out.write(f'{status_line[1]}: {len(objects)} ({fallbacks}x fallback)')
+    repype.status.update(status, f'{status_line[1]}: {len(objects)} ({fallbacks}x fallback)')
 
 
 def _compute_objects(objects, y, atoms, x_map, lock, dsm_cfg, log_root_dir):

@@ -1,4 +1,4 @@
-from .output import get_output
+import repype.status
 
 
 def _merge_minsetcover(objects, accepted_objects, beta):
@@ -21,12 +21,11 @@ def _merge_minsetcover(objects, accepted_objects, beta):
     return accepted_objects, replacements_count
 
 
-def _solve_minsetcover(objects, beta, merge=True, out=None):
+def _solve_minsetcover(objects, beta, merge=True, status=None):
     accepted_objects  = []  ## primal variable
     remaining_objects = list(objects)
     uncovered_atoms      = set.union(*[c.footprint for c in objects])
 
-    out = get_output(out)
     w = lambda c: c.energy + beta
     while len(remaining_objects) > 0:
 
@@ -41,11 +40,11 @@ def _solve_minsetcover(objects, beta, merge=True, out=None):
         uncovered_atoms -= best_object.footprint
         remaining_objects = [c for c in remaining_objects if len(c.footprint & uncovered_atoms) > 0]
 
-    out.write(f'MINSETCOVER - GREEDY accepted objects: {len(accepted_objects)}')
+    repype.status.update(status, f'MINSETCOVER - GREEDY accepted objects: {len(accepted_objects)}')
 
     if merge:
         accepted_objects, replacements_count = _merge_minsetcover(objects, accepted_objects, beta)
-        out.write(f'MINSETCOVER - MERGED objects: {replacements_count}')
+        repype.status.update(status, f'MINSETCOVER - MERGED objects: {replacements_count}')
 
     return accepted_objects
 
@@ -54,7 +53,7 @@ DEFAULT_MAX_ITER = 5
 DEFAULT_GAMMA    = 0.8
 
 
-def solve_minsetcover(objects, beta, merge=True, max_iter=DEFAULT_MAX_ITER, gamma=DEFAULT_GAMMA, out=None):
+def solve_minsetcover(objects, beta, merge=True, max_iter=DEFAULT_MAX_ITER, gamma=DEFAULT_GAMMA, status=None):
     """Computs an approximative min-weight set-cover.
 
     This function implements Algorithm 2 of :ref:`Kostrykin and Rohr (TPAMI 2023) <references>`.
@@ -69,16 +68,15 @@ def solve_minsetcover(objects, beta, merge=True, max_iter=DEFAULT_MAX_ITER, gamm
     """
     assert beta >= 0
     assert 0 < gamma < 1
-    out = get_output(out)
-    solution1 = _solve_minsetcover(objects, beta, merge, out)
+    solution1 = _solve_minsetcover(objects, beta, merge, status)
     if max_iter > 1 and beta > 0:
         new_beta = beta * gamma
-        out.write(f'MINSETCOVER retry with lower beta: {new_beta:g}')
-        solution2 = solve_minsetcover(objects, new_beta, merge, max_iter - 1, gamma, out)
+        repype.status.update(status, f'MINSETCOVER retry with lower beta: {new_beta:g}')
+        solution2 = solve_minsetcover(objects, new_beta, merge, max_iter - 1, gamma, status)
         solution1_value = sum(c.energy for c in solution1) + beta * len(solution1)
         solution2_value = sum(c.energy for c in solution2) + beta * len(solution2)
         if solution2_value < solution1_value:
-            out.write(f'MINSETCOVER solution for beta={beta:g} improved by {solution2_value - solution1_value:,g} (-{100 * (1 - solution2_value / solution1_value):.2f}%)')
+            repype.status.update(status, f'MINSETCOVER solution for beta={beta:g} improved by {solution2_value - solution1_value:,g} (-{100 * (1 - solution2_value / solution1_value):.2f}%)')
             return solution2
     return solution1
 
@@ -113,9 +111,9 @@ class MinSetCover:
         self. objects_by_cluster = {cluster: [atom for atom in atoms if adjacencies.get_cluster_label(_get_atom_label(atom)) == cluster] for cluster in adjacencies.cluster_labels}
         self.solution_by_cluster = {cluster: self.objects_by_cluster[cluster] for cluster in adjacencies.cluster_labels}
 
-    def _update_partial_solution(self, cluster_label, out):
+    def _update_partial_solution(self, cluster_label, status):
         objects = self.objects_by_cluster[cluster_label]
-        partial_solution = solve_minsetcover(objects, self.beta, out=out, **self.solve_minsetcover_kwargs)
+        partial_solution = solve_minsetcover(objects, self.beta, status=status, **self.solve_minsetcover_kwargs)
         self.solution_by_cluster[cluster_label] = partial_solution
 
     def get_atom(self, atom_label):
@@ -123,7 +121,7 @@ class MinSetCover:
          """
          return self.atoms[atom_label]
 
-    def update(self, new_objects, out=None):
+    def update(self, new_objects, status=None):
         """Adds new objects to the family of candidate sets :math:`\\mathscr S` and updates the solution.
 
         :param new_objects: An iterable of :py:class:`~.objects.Object` instances, each representing a set of atomic image regions.
@@ -136,7 +134,7 @@ class MinSetCover:
             invalidated_clusters.append(cluster_label)
             self.objects_by_cluster[cluster_label].append(new_object)
         for cluster_label in frozenset(invalidated_clusters):
-            self._update_partial_solution(cluster_label, out)
+            self._update_partial_solution(cluster_label, status)
 
     def get_cluster_costs(self, cluster_label):
         """Returns the value of the min-weight set-cover for the subset of candidate sets which correspond to a single region of possibly clustered objects.
