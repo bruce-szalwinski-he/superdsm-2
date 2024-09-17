@@ -7,7 +7,8 @@ import scipy.sparse
 
 
 def copy_dict(d):
-    """Returns a copy of dict `d`.
+    """
+    Returns a copy of dict `d`.
     """
     assert isinstance(d, dict), 'not a "dict" object'
     return {item[0]: copy_dict(item[1]) if isinstance(item[1], dict) else item[1] for item in d.items()}
@@ -15,7 +16,8 @@ def copy_dict(d):
 
 def uplift_smooth_matrix(smoothmat, mask):
     assert mask.sum() == smoothmat.shape[0], 'smooth matrix and region mask are incompatible'
-    if not scipy.sparse.issparse(smoothmat): warnings.warn(f'{uplift_smooth_matrix.__name__} received a dense matrix which is inefficient')
+    if not scipy.sparse.issparse(smoothmat):
+        warnings.warn(f'{uplift_smooth_matrix.__name__} received a dense matrix which is inefficient')
     M = scipy.sparse.coo_matrix((np.prod(mask.shape), smoothmat.shape[0]))
     M.data = np.ones(mask.sum())
     M.row  = np.where(mask.reshape(-1))[0]
@@ -33,8 +35,10 @@ def join_path(path1, path2):
 
 
 def is_subpath(path, subpath):
-    if isinstance(   path, str):    path = pathlib.Path(   path)
-    if isinstance(subpath, str): subpath = pathlib.Path(subpath)
+    if isinstance(path, str):
+        path = pathlib.Path(path)
+    if isinstance(subpath, str):
+        subpath = pathlib.Path(subpath)
     try:
         subpath.relative_to(path)
         return True
@@ -71,32 +75,44 @@ try:
             class NullLock:
                 def __enter__(self): pass
                 def __exit__ (self, _type, value, tb): pass
-            if lock is None: return NullLock()
-            else: return lock
+            if lock is None:
+                return NullLock()
+            else:
+                return lock
 
         def __enter__(self):
             if np.isinf(self.limit):
-                create_lock = lambda flags: None
+                create_lock = lambda flags: None  # noqa: E731
             else:
-                create_lock = lambda flags: posix_ipc.Semaphore(f'/{self.name}', flags, mode=384, initial_value=self.limit)
+                create_lock = lambda flags: posix_ipc.Semaphore(  # noqa: E731
+                    f'/{self.name}',
+                    flags,
+                    mode=384,
+                    initial_value=self.limit,
+                )
             self._lock = create_lock(posix_ipc.O_CREAT | posix_ipc.O_EXCL)
+
             class Lock:
                 def __init__(self, create_lock):
                     self._create_lock = create_lock
 
                 def __enter__(self):
                     self._lock = self._create_lock(posix_ipc.O_CREAT)
-                    if self._lock is not None: self._lock.acquire()
+                    if self._lock is not None:
+                        self._lock.acquire()
 
                 def __exit__(self, _type, value, tb):
-                    if self._lock is not None: self._lock.release()
+                    if self._lock is not None:
+                        self._lock.release()
+
             return Lock(create_lock)
 
         def __exit__(self, _type, value, tb):
-            if self._lock is not None: self._lock.unlink()
+            if self._lock is not None:
+                self._lock.unlink()
 
 except ModuleNotFoundError:
-        
+
     class SystemSemaphore:
         def __init__(self, name, limit):
             assert np.isinf(limit), 'required package: posix_ipc >=1.0.4,<2.0'
