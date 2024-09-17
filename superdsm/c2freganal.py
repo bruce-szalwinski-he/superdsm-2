@@ -24,9 +24,13 @@ from .objects import (
 
 
 def _get_next_seed(region, where, score_func, connectivity=4):
-    if   connectivity == 4: footprint = morph.disk(1)
-    elif connectivity == 8: footprint = np.ones((3,3))
-    else: raise ValueError(f'unknown connectivity: {connectivity}')
+    match connectivity:
+        case 4:
+            footprint = morph.disk(1)
+        case 8:
+            footprint = np.ones((3, 3))
+        case _:
+            raise ValueError(f'unknown connectivity: {connectivity}')
     mask  = np.logical_and(region.mask, where)
     image = region.model
     image_max = ndi.maximum_filter(image, footprint=footprint)
@@ -36,7 +40,8 @@ def _get_next_seed(region, where, score_func, connectivity=4):
         maxima_labels = frozenset(maxima.reshape(-1)) - {0}
         scores = {max_label: score_func(maxima == max_label) for max_label in maxima_labels}
         label  = max(maxima_labels, key=scores.get)
-        if scores[label] > -np.inf: return (maxima == label)
+        if scores[label] > -np.inf:
+            return (maxima == label)
     return None
 
 
@@ -54,7 +59,8 @@ def _normalize_labels_map(labels, first_label=0, skip_labels=[]):
     label_translation = {}
     next_label = first_label
     for old_label in sorted(np.unique(labels.reshape(-1))):
-        if old_label in skip_labels: continue
+        if old_label in skip_labels:
+            continue
         result[ labels == old_label] = next_label
         label_translation[old_label] = next_label
         next_label += 1
@@ -69,6 +75,7 @@ def _hash_mask(mask):
 def _get_cached_normalized_energy_computer(y, cluster):
     cache = dict()
     cp_buffer = Image(model=y.model, mask=np.zeros(cluster.full_mask.shape, bool))
+
     def compute_normalized_energy(obj, region, atoms_map, dsm_cfg):
         cp_kwargs = copy_dict(dsm_cfg)
         cp_kwargs.pop('smooth_mat_max_allocations', None)
@@ -87,6 +94,7 @@ def _get_cached_normalized_energy_computer(y, cluster):
             cache_hit = energy / cp_region.mask.sum()
             cache[cp_region_hash] = cache_hit
         return cache_hit
+
     return compute_normalized_energy
 
 
@@ -94,7 +102,9 @@ class C2F_RegionAnalysis(repype.stage.Stage):
     """
     Implements the :ref:`pipeline_theory_c2freganal` scheme.
 
-    This stage requires ``y`` and ``dsm_cfg`` for input and produces ``y_mask``, ``atoms``, ``adjacencies``, ``seeds``, ``clusters`` for output. Refer to :ref:`pipeline_inputs_and_outputs` for more information on the available inputs and outputs.
+    This stage requires ``y`` and ``dsm_cfg`` for input and produces ``y_mask``, ``atoms``, ``adjacencies``, ``seeds``,
+    ``clusters`` for output. Refer to :ref:`pipeline_inputs_and_outputs` for more information on the available inputs
+    and outputs.
 
     Hyperparameters
     ---------------
@@ -102,22 +112,43 @@ class C2F_RegionAnalysis(repype.stage.Stage):
     The following hyperparameters can be used to control this pipeline stage:
 
     ``c2f-region-analysis/seed_connectivity``
-        Image points which are adjacent to each other are *not* to determine the atomic image regions. Adjacency of such image points is determined using either 4-connectivity or 8-connectivity. Must be either 4 or 8. Defaults to 8.
+        Image points which are adjacent to each other are *not* to determine the atomic image regions. Adjacency of
+        such image points is determined using either 4-connectivity or 8-connectivity. Must be either 4 or 8. Defaults
+        to 8.
 
     ``c2f-region-analysis/min_atom_radius``
-        No region determined by the :ref:`pipeline_theory_c2freganal` scheme is smaller than a circle of this radius (in terms of the surface area). Corresponds to *min_region_radius* in :ref:`Kostrykin and Rohr (TPAMI 2023, <references>` Supplemental Materials 5 and 8). Defaults to 15, or to ``AF_min_atom_radius × radius`` if configured automatically (and ``AF_min_atom_radius`` defaults to 0.33).
+        No region determined by the :ref:`pipeline_theory_c2freganal` scheme is smaller than a circle of this radius
+        (in terms of the surface area). Corresponds to *min_region_radius* in
+        :ref:`Kostrykin and Rohr (TPAMI 2023, <references>` Supplemental Materials 5 and 8). Defaults to 15, or to
+        ``AF_min_atom_radius × radius`` if configured automatically (and ``AF_min_atom_radius`` defaults to 0.33).
 
     ``c2f-region-analysis/max_atom_norm_energy``
-        No atomic image region :math:`\\omega` determined by the :ref:`pipeline_theory_c2freganal` has a normalized energy :math:`r(\\omega)` smaller than this value. Corresponds to *max_norm_energy1* in :ref:`Kostrykin and Rohr (TPAMI 2023, <references>` Supplemental Materials 5 and 8). Defaults to 0.05.
+        No atomic image region :math:`\\omega` determined by the :ref:`pipeline_theory_c2freganal` has a normalized
+        energy :math:`r(\\omega)` smaller than this value. Corresponds to *max_norm_energy1* in
+        :ref:`Kostrykin and Rohr (TPAMI 2023, <references>` Supplemental Materials 5 and 8). Defaults to 0.05.
 
     ``c2f-region-analysis/min_norm_energy_improvement``
-        Each split performed during the computation of the atomic image regions must improve the normalized energy :math:`r(\\omega)` of an image region :math:`\\omega` by at least this factor (see :ref:`pipeline_theory_c2freganal`). Given that an image region is split into the sub-regions :math:`\\omega_1, \\omega_2`, the improvement of the split is defined by the fraction :math:`\\max\\{ r(\\omega_1), r(\\omega_1) \\} / r(\\omega_1 \\cup \\omega_2)`. Lower values of the fraction correspond to better improvements. Defaults to 0.1.
+        Each split performed during the computation of the atomic image regions must improve the normalized energy
+        :math:`r(\\omega)` of an image region :math:`\\omega` by at least this factor (see
+        :ref:`pipeline_theory_c2freganal`). Given that an image region is split into the sub-regions
+        :math:`\\omega_1, \\omega_2`, the improvement of the split is defined by the fraction
+        :math:`\\max\\{ r(\\omega_1), r(\\omega_1) \\} / r(\\omega_1 \\cup \\omega_2)`. Lower values of the fraction
+        correspond to better improvements. Defaults to 0.1.
 
     ``c2f-region-analysis/max_cluster_marker_irregularity``
-        Threshold for the "irregularity" of image regions, which is used to determine the output ``y_mask``. Image regions with an "irregularity" higher than this value are masked as "empty" image regions and discarded from further considerations. This is the threshold for the P/A ratio described in :ref:`Kostrykin and Rohr (TPAMI 2023, <references>` see Section 3.1 and *max_pa_ratio* in Supplemental Material 8). Defaults to 0.2.
+        Threshold for the "irregularity" of image regions, which is used to determine the output ``y_mask``. Image
+        regions with an "irregularity" higher than this value are masked as "empty" image regions and discarded from
+        further considerations. This is the threshold for the P/A ratio described in
+        :ref:`Kostrykin and Rohr (TPAMI 2023, <references>` see Section 3.1 and *max_pa_ratio* in Supplemental Material
+        8). Defaults to 0.2.
 
     .. note::
-       This stage takes the DSM-related hyperparameters as an input. Due to a bug in the original implementation, the value set for the hyperparameter ``dsm/background_margin`` was disrespected and a value of 20 was always used instead. However, the impact on the results is only subtle. Having this issue fixed, the results are mostly consistent with those originally reported in :ref:`Kostrykin and Rohr (TPAMI 2023, <references>` the hyperparameter :math:`\\alpha` is changed from 0.1 to 0.2 for the GOWT1-2 dataset when using SuperDSM, see the ``examples/GOWT1-2/default/adapted/task.json`` file).
+       This stage takes the DSM-related hyperparameters as an input. Due to a bug in the original implementation, the
+       value set for the hyperparameter ``dsm/background_margin`` was disrespected and a value of 20 was always used
+       instead. However, the impact on the results is only subtle. Having this issue fixed, the results are mostly
+       consistent with those originally reported in :ref:`Kostrykin and Rohr (TPAMI 2023, <references>` the
+       hyperparameter :math:`\\alpha` is changed from 0.1 to 0.2 for the GOWT1-2 dataset when using SuperDSM, see the
+       ``examples/GOWT1-2/default/adapted/task.json`` file).
     """
 
     id = 'c2f-region-analysis'
@@ -133,7 +164,7 @@ class C2F_RegionAnalysis(repype.stage.Stage):
 
         dsm_cfg = copy_dict(dsm_cfg)
         dsm_cfg['smooth_amount'] = np.inf
-        
+
         repype.status.update(status, f'Analyzing cluster markers...', intermediate=True)
         y = Image.create_from_array(y, normalize=False)
         fg_mask = (y.model > 0)
@@ -145,20 +176,32 @@ class C2F_RegionAnalysis(repype.stage.Stage):
             cluster_marker_irregularity = fg_bd[cluster_marker].sum() / cluster_marker.sum()
             if cluster_marker_irregularity > max_cluster_marker_irregularity:
                 y_mask[cluster_marker] = False
-                
+
         cluster_markers[~y_mask] = cluster_markers.min()
         cluster_markers = _normalize_labels_map(cluster_markers, first_label=0)[0]
         repype.status.update(status, f'Extracted {cluster_markers.max()} cluster markers')
-        
+
         clusters  = segm.watershed(ndi.distance_transform_edt(cluster_markers == 0), markers=cluster_markers)
         atoms_map = np.full(y.model.shape, 0)
         atom_candidate_by_label = {}
-        
+
         y_id = ray.put(y)
         dsm_cfg_id = ray.put(dsm_cfg)
         y_mask_id = ray.put(y_mask)
         clusters_id = ray.put(clusters)
-        futures = [process_cluster.remote(clusters_id, cluster_label, y_id, y_mask_id, max_atom_norm_energy, min_atom_radius, min_norm_energy_improvement, dsm_cfg_id, seed_connectivity) for cluster_label in frozenset(clusters.reshape(-1)) - {0}]
+        futures = [
+            process_cluster.remote(
+                clusters_id,
+                cluster_label,
+                y_id,
+                y_mask_id,
+                max_atom_norm_energy,
+                min_atom_radius,
+                min_norm_energy_improvement,
+                dsm_cfg_id,
+                seed_connectivity,
+            ) for cluster_label in frozenset(clusters.reshape(-1)) - {0}
+        ]
         max_normalized_energy = -np.inf
         for ret_idx, ret in enumerate(get_ray_1by1(futures)):
             cluster_label, cluster_universe, cluster_atoms, cluster_atoms_map, cluster_max_normalized_energy = ret
@@ -170,16 +213,16 @@ class C2F_RegionAnalysis(repype.stage.Stage):
                 atom_candidate_by_label[cluster_label_offset + list(atom_candidate.footprint)[0]] = atom_candidate
                 atom_candidate.seed = np.round(ndi.center_of_mass(atom_candidate.seed)).astype(int) + cluster.offset
             repype.status.update(status, f'Analyzing clusters... {ret_idx + 1} / {len(futures)}', intermediate=True)
-            
+
         atoms_map, label_translation = _normalize_labels_map(atoms_map, first_label=1, skip_labels=[0])
         for old_label, atom_candidate in dict(atom_candidate_by_label).items():
             atom_candidate_by_label[label_translation[old_label]] = atom_candidate
         repype.status.update(status, f'Extracted {atoms_map.max()} atoms (max energy rate: {max_normalized_energy:g})')
-        
+
         # Compute adjacencies graph
         atom_nodes  = [atom_candidate_by_label[atom_label].seed for atom_label in sorted(label_translation.values())]
         adjacencies = AtomAdjacencyGraph(atoms_map, clusters, fg_mask, atom_nodes, status)
-        
+
         return {
             'y_mask': y_mask,
             'atoms': atoms_map,
@@ -199,13 +242,28 @@ def process_cluster(*args, **kwargs):
     return _process_cluster_impl(*args, **kwargs)
 
 
-def _process_cluster_impl(clusters, cluster_label, y, y_mask, max_atom_norm_energy, min_atom_radius, min_norm_energy_improvement, dsm_cfg, seed_connectivity):
+def _process_cluster_impl(
+        clusters,
+        cluster_label,
+        y,
+        y_mask,
+        max_atom_norm_energy,
+        min_atom_radius,
+        min_norm_energy_improvement,
+        dsm_cfg,
+        seed_connectivity,
+    ):
     min_atom_size = math.pi * (min_atom_radius ** 2)
     cluster = y.get_region(clusters == cluster_label, shrink=True)
     masked_cluster = cluster.get_region(cluster.shrink_mask(y_mask))
     root_candidate = Object()
     root_candidate.footprint = frozenset([1])
-    root_candidate.seed = _get_next_seed(masked_cluster, cluster.model > 0, lambda loc: cluster.model[loc].max(), seed_connectivity)
+    root_candidate.seed = _get_next_seed(
+        masked_cluster,
+        cluster.model > 0,
+        lambda loc: cluster.model[loc].max(),
+        seed_connectivity,
+    )
     atoms_map = cluster.mask.astype(int) * list(root_candidate.footprint)[0]
     compute_normalized_energy = _get_cached_normalized_energy_computer(y, cluster)
 
@@ -221,15 +279,20 @@ def _process_cluster_impl(clusters, cluster_label, y, y_mask, max_atom_norm_ener
     while not split_queue.empty():
         c0 = split_queue.get()
         c0_mask = c0.get_mask(atoms_map)
-        
+
         if c0_mask.sum() < 2 * min_atom_size:
-            leaf_candidates.append(c0) ## the region is too small to be split
+            leaf_candidates.append(c0)  # the region is too small to be split
             continue
 
         c1 = Object()
         c2 = Object()
         c1.seed = c0.seed
-        c2.seed = _get_next_seed(masked_cluster, np.all((cluster.model > 0, c0_mask, seed_distances >= 1), axis=0), lambda loc: seed_distances[loc].max(), seed_connectivity)
+        c2.seed = _get_next_seed(
+            masked_cluster,
+            np.all((cluster.model > 0, c0_mask, seed_distances >= 1), axis=0),
+            lambda loc: seed_distances[loc].max(),
+            seed_connectivity,
+        )
         assert not np.logical_and(c1.seed, c2.seed).any()
         if c2.seed is None:
             leaf_candidates.append(c0)
@@ -239,16 +302,16 @@ def _process_cluster_impl(clusters, cluster_label, y, y_mask, max_atom_norm_ener
 
         new_atom_label   = atoms_map.max() + 1
         c1_mask, c2_mask = _watershed_split(cluster.get_region(c0_mask), c1.seed, c2.seed)
-            
+
         if c1_mask.sum() < min_atom_size:
-            c0.seed = c2.seed   ## change the seed for current region…
-            split_queue.put(c0) ## …and try again with different seed
+            c0.seed = c2.seed  # change the seed for current region...
+            split_queue.put(c0)  # ...and try again with different seed
             continue
-            
+
         if c2_mask.sum() < min_atom_size:
-            split_queue.put(c0) ## try again with different seed
+            split_queue.put(c0)  # try again with different seed
             continue
-            
+
         atoms_map_previous = atoms_map.copy()
         atoms_map[c2_mask] = new_atom_label
         c1.footprint = frozenset(c0.footprint)
@@ -259,29 +322,31 @@ def _process_cluster_impl(clusters, cluster_label, y, y_mask, max_atom_norm_ener
         for c in (c1, c2):
             try:
                 c.normalized_energy = compute_normalized_energy(c, masked_cluster, atoms_map, dsm_cfg)
-            except:
+            except:  # noqa: E722
                 c.normalized_energy = None
-                
+
         if c1.normalized_energy is None and c2.normalized_energy is None:
-            split_queue.put(c0) ## try again with different seed
+            split_queue.put(c0)  # try again with different seed
             atoms_map = atoms_map_previous
             continue
-            
+
         if c1.normalized_energy is None and c2.normalized_energy is not None:
-            c0.seed = c2.seed   ## change the seed for current region…
-            split_queue.put(c0) ## …and try again with different seed
+            c0.seed = c2.seed  # change the seed for current region...
+            split_queue.put(c0)  # ...and try again with different seed
             atoms_map = atoms_map_previous
             continue
-            
+
         if c1.normalized_energy is not None and c2.normalized_energy is None:
-            split_queue.put(c0) ## try again with different seed
+            split_queue.put(c0)  # try again with different seed
             atoms_map = atoms_map_previous
             continue
-            
-        assert c1.normalized_energy is not None and c2.normalized_energy is not None, str((c1.normalized_energy, c2.normalized_energy))
+
+        assert c1.normalized_energy is not None and c2.normalized_energy is not None, str(
+            (c1.normalized_energy, c2.normalized_energy),
+        )
         norm_energy_improvement = 1 - max((c1.normalized_energy, c2.normalized_energy)) / c0.normalized_energy
         if norm_energy_improvement < min_norm_energy_improvement:
-            split_queue.put(c0) ## try again with different seed
+            split_queue.put(c0)  # try again with different seed
             atoms_map = atoms_map_previous
         else:
             for c in (c1, c2):
@@ -294,4 +359,3 @@ def _process_cluster_impl(clusters, cluster_label, y, y_mask, max_atom_norm_ener
     assert frozenset([list(c.footprint)[0] for c in leaf_candidates]) == root_candidate.footprint
     max_normalized_energy = max((c.normalized_energy for c in leaf_candidates))
     return cluster_label, root_candidate, leaf_candidates, atoms_map, max_normalized_energy
-    

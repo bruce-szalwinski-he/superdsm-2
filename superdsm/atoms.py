@@ -9,13 +9,15 @@ def _find_seed_of_region(region, seeds):
     candidates = list()
     for seed in seeds:
         seed = tuple(seed)
-        if region[seed]: candidates.append(seed)
+        if region[seed]:
+            candidates.append(seed)
     assert len(candidates) == 1, f'There is no (unique) seed. Number of possible seeds: {len(candidates)}'
     return candidates[0]
 
 
 class AtomAdjacencyGraph:
-    """Graph representation of the adjacencies of atomic image regions.
+    """
+    Graph representation of the adjacencies of atomic image regions.
 
     This corresponds to the adjacency graph :math:`\\mathcal G` as defined in :ref:`pipeline_theory_c2freganal`.
 
@@ -60,7 +62,8 @@ class AtomAdjacencyGraph:
         self._seeds            = dict()
         for l0 in range(1, atoms.max() + 1):
             cc = (atoms == l0)
-            if not cc.any(): continue
+            if not cc.any():
+                continue
             cluster_label = clusters[cc][0]
             cluster_mask  = np.logical_and(fg_mask, clusters == cluster_label)
             cc_dilated = np.logical_and(morph.binary_dilation(cc, se), np.logical_not(cc))
@@ -77,7 +80,7 @@ class AtomAdjacencyGraph:
             repype.status.update(status, 'Processed atom %d / %d' % (l0, atoms.max()), intermediate=True)
         repype.status.update(status, 'Computed adjacency graph')
         assert self._is_symmetric()
-    
+
     def __getitem__(self, atom_label):
         return self._adjacencies[atom_label]
 
@@ -88,9 +91,10 @@ class AtomAdjacencyGraph:
             self._cluster_by_atom[atom_label] = new_cluster_label
             self._atoms_by_cluster[new_cluster_label]  = {atom_label}
             self._atoms_by_cluster[old_cluster_label] -= {atom_label}
-    
+
     def get_cluster_label(self, atom_label):
-        """Returns the label of the region of possibly clustered objects, which an atomic image region is a part of.
+        """
+        Returns the label of the region of possibly clustered objects, which an atomic image region is a part of.
 
         .. runblock:: pycon
 
@@ -111,9 +115,10 @@ class AtomAdjacencyGraph:
            >>> adj.get_cluster_label(4)
         """
         return self._cluster_by_atom[atom_label]
-    
+
     def get_atoms_in_cluster(self, cluster_label):
-        """Returns the set of labels of all atomic image regions, which are part of a region of possibly clustered objects.
+        """
+        Returns the set of labels of all atomic image regions, which are part of a region of possibly clustered objects.
 
         .. runblock:: pycon
 
@@ -132,10 +137,11 @@ class AtomAdjacencyGraph:
            >>> adj.get_atoms_in_cluster(2)
         """
         return self._atoms_by_cluster[cluster_label]
-    
+
     @property
     def cluster_labels(self):
-        """The set of labels of all regions of possibly clustered objects.
+        """
+        The set of labels of all regions of possibly clustered objects.
 
         .. runblock:: pycon
 
@@ -153,10 +159,11 @@ class AtomAdjacencyGraph:
            >>> adj.cluster_labels
         """
         return frozenset(self._atoms_by_cluster.keys())
-    
+
     @property
     def atom_labels(self):
-        """The set of labels of all atomic image regions.
+        """
+        The set of labels of all atomic image regions.
 
         .. runblock:: pycon
 
@@ -176,8 +183,9 @@ class AtomAdjacencyGraph:
         return frozenset(self._cluster_by_atom.keys())
 
     def get_seed(self, atom_label):
-        """Returns the seed point which was used to determine an atomic image region.
-        
+        """
+        Returns the seed point which was used to determine an atomic image region.
+
         :return: Tuple of the coordinates of the seed point.
 
         .. runblock:: pycon
@@ -199,12 +207,17 @@ class AtomAdjacencyGraph:
            >>> adj.get_seed(4)
         """
         return self._seeds[atom_label]
-    
-    def get_edge_lines(self, accept='all', reduce=True):
-        """Returns a list of lines corresponding to the edges of the graph.
 
-        :param accept: Must be either ``all`` or a callable. If ``all`` is used, all edges of the graph are included. Otherwise, an edge ``(i,j)`` is included only if ``accept(i)`` and ``accept(j)`` evaluate to `True`, where ``i`` and ``j`` are the labels of two adjacent atomic image regions.
-        :param reduce: If `True`, then an edge ``(i,j)`` is included only if ``i > j``. Otherwise, both edges ``(i,j)`` and ``(j,i)`` are included.
+    def get_edge_lines(self, accept='all', reduce=True):
+        """
+        Returns a list of lines corresponding to the edges of the graph.
+
+        Arguments:
+            accept: Must be either ``all`` or a callable. If ``all`` is used, all edges of the graph are included.
+                Otherwise, an edge ``(i,j)`` is included only if ``accept(i)`` and ``accept(j)`` evaluate to `True`,
+                where ``i`` and ``j`` are the labels of two adjacent atomic image regions.
+            reduce: If `True`, then an edge ``(i,j)`` is included only if ``i > j``. Otherwise, both edges ``(i,j)``
+                and ``(j,i)`` are included.
 
         Each line is a tuple of two seed points, and each seed point is a tuple of coordinates.
 
@@ -227,22 +240,27 @@ class AtomAdjacencyGraph:
            >>> adj.get_edge_lines(lambda i: i != 4)
            >>> adj.get_edge_lines(lambda i: i != 4, reduce=False)
         """
-        if isinstance(accept, str) and accept == 'all': accept = lambda atom_label: True
+        if isinstance(accept, str) and accept == 'all':
+            accept = lambda atom_label: True  # noqa: E731
         assert callable(accept), f'Not a callable: {str(accept)}'
         lines = []
-        for l in self.atom_labels:
+        for l in self.atom_labels:  # noqa: E741
             seed_l = self.get_seed(l)
-            if not accept(l): continue
+            if not accept(l):
+                continue
             for k in self[l]:
                 seed_k = self.get_seed(k)
-                if not accept(k): continue
-                if reduce and l > k: continue
+                if not accept(k):
+                    continue
+                if reduce and l > k:
+                    continue
                 lines.append((seed_l, seed_k))
         return lines
 
     @property
     def max_degree(self):
-        """The maximum degree of the graph.
+        """
+        The maximum degree of the graph.
 
         .. runblock:: pycon
 
@@ -264,7 +282,8 @@ class AtomAdjacencyGraph:
         return max(self.get_atom_degree(atom_label) for atom_label in self.atom_labels)
 
     def get_atom_degree(self, atom_label):
-        """Returns the number of adjacent atomic image regions.
+        """
+        Returns the number of adjacent atomic image regions.
 
         .. runblock:: pycon
 
@@ -293,4 +312,3 @@ class AtomAdjacencyGraph:
             if not all(atom1 in self[atom2] for atom2 in self[atom1]):
                 return False
         return True
-
