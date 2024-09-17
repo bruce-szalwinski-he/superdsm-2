@@ -15,6 +15,7 @@ requests.packages.urllib3.disable_warnings()
 root_dir = pathlib.Path(os.path.realpath(__file__)).parent
 data_dir = root_dir / 'data'
 
+
 def load_data(url, datasets, **kwargs):
     archive_suffix = ''.join(pathlib.Path(url).suffixes)
     with tempfile.NamedTemporaryFile('wb', suffix=archive_suffix) as archive_file:
@@ -34,6 +35,7 @@ def load_data(url, datasets, **kwargs):
                 dst.parent.mkdir(parents=True, exist_ok=True)
                 shutil.move(str(src_root / src), str(dst))
 
+
 def require_data(data_id, filename=None):
     data_path = data_dir / data_id
     if not data_path.exists():
@@ -52,7 +54,7 @@ def get_log_root_dir(filepath):
 
 def normalize_image(img):
     if str(img.dtype).startswith('float'):
-        img = (img - img.min()) / (img.max() - img.min()) 
+        img = (img - img.min()) / (img.max() - img.min())
         img = (img * 255).round().astype('uint8')
     return img
 
@@ -60,11 +62,11 @@ def normalize_image(img):
 def validate_image(test, name, img):
     try:
         expected = superdsm.io.imread(str(root_dir / 'expected' / name), as_gray=False)
-        img = normalize_image(img) ## processes the image as if it was written to a file and read back
+        img = normalize_image(img)  # processes the image as if it was written to a file and read back
         test.assertEqual(img.shape, expected.shape)
         msg = f'Maximum absolute difference: {np.abs(img - expected).max():g}'
         test.assertTrue(np.allclose(img, expected), msg)
-    except:
+    except:  # noqa: E722
         actual_path = root_dir / 'actual' / name
         actual_path.parent.mkdir(parents=True, exist_ok=True)
         superdsm.io.imsave(str(actual_path), img)

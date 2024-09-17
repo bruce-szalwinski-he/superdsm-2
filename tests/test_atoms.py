@@ -2,22 +2,20 @@ import unittest
 import numpy as np
 import superdsm.atoms
 
-from . import testsuite
-
 
 class atoms(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
         self.atoms = np.array([[1, 1, 2, 4],
-                                [1, 3, 2, 4],
-                                [3, 3, 3, 4]])
+                               [1, 3, 2, 4],
+                               [3, 3, 3, 4]])
         self.clusters = np.array([[1, 1, 2, 2],
-                                    [1, 2, 2, 2],
-                                    [2, 2, 2, 2]])
+                                  [1, 2, 2, 2],
+                                  [2, 2, 2, 2]])
         self.fg_mask = np.array([[True, False, True, False],
-                                    [True, False, True,  True],
-                                    [True,  True, True,  True]])
+                                 [True, False, True,  True],
+                                 [True,  True, True,  True]])
         self.seeds = [(0, 0), (0, 2), (2, 1), (1, 3)]
         self.adj = superdsm.atoms.AtomAdjacencyGraph(self.atoms, self.clusters, self.fg_mask, self.seeds, status=None)
 

@@ -21,7 +21,7 @@ class render(unittest.TestCase):
     def setUpClass(self):
         ray.init(num_cpus=4, log_to_driver=False, logging_level='error')
         data_path = testsuite.require_data('bbbc033', 'C2.tif')
-        log_root_dir = testsuite.get_log_root_dir(__file__)
+        log_root_dir = testsuite.get_log_root_dir(__file__)  # noqa: F841  # FIXME: bring back logging functionality
         img_3d = superdsm.io.imread(data_path)
         img = img_3d[28]
         pipeline = superdsm.pipeline.Pipeline()
