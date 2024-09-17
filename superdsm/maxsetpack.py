@@ -2,14 +2,13 @@ import repype.status
 
 
 def solve_maxsetpack(objects, status=None):
-    accepted_objects  = []  ## primal variable
+    accepted_objects  = []  # primal variable
     remaining_objects = list(objects)
 
-    w = lambda c: c.energy
     while len(remaining_objects) > 0:
 
         # choose the best remaining object
-        best_object = max(remaining_objects, key=w)
+        best_object = max(remaining_objects, key=lambda c: c.energy)
         accepted_objects.append(best_object)
 
         # discard conflicting objects

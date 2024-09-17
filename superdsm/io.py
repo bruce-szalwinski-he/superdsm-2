@@ -9,10 +9,12 @@ def imsave(filepath, img, shape=None, antialias=False):
     """
     Writes an image to a file.
 
-    :param filepath: The path of the file to be written.
-    :param img: A ``numpy.ndarray`` object corresponding to the image data.
-    :param shape: Resolution of the image to be written. Useful for up- and downsampling the image data.
-    :param antialias: Whether interpolation and/or anti aliasing should be used for resampling (only used if ``shape`` is not `None`).
+    Arguments:
+        filepath: The path of the file to be written.
+        img: A ``numpy.ndarray`` object corresponding to the image data.
+        shape: Resolution of the image to be written. Useful for up- and downsampling the image data.
+        antialias: Whether interpolation and/or anti aliasing should be used for resampling (only used if ``shape`` is
+            not `None`).
     """
     if shape is not None:
         aa, aa_sigma = False, None
@@ -26,10 +28,17 @@ def imsave(filepath, img, shape=None, antialias=False):
             elif isinstance(antialias, bool):
                 aa = antialias
                 order = 1 if antialias else 0
-        img = skimage.transform._warps.resize(img, shape, order=order, anti_aliasing=aa, anti_aliasing_sigma=aa_sigma, mode='reflect')
+        img = skimage.transform._warps.resize(
+            img,
+            shape,
+            order=order,
+            anti_aliasing=aa,
+            anti_aliasing_sigma=aa_sigma,
+            mode='reflect',
+        )
     filepath = os.path.expanduser(filepath)
     if str(img.dtype).startswith('float'):
-        img = (img - img.min()) / (img.max() - img.min()) 
+        img = (img - img.min()) / (img.max() - img.min())
         img = (img * 255).round().astype('uint8')
     with warnings.catch_warnings():
         warnings.simplefilter('ignore', UserWarning)
