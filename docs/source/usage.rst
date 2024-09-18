@@ -55,7 +55,7 @@ After this initialization routine, SuperDSM is ready to use:
     cfg = superdsm.Config()
     data, _, _ = pipeline.process_image(img, cfg)
 
-In this example, the default set of hyperparameters will be used. The parameters can be changed using the ``cfg`` object (see the :py:class:`repype.config.Config` class API). The available hyperparameters are described in the documentation of the respective stages employed in the pipeline.
+In this example, the default set of hyperparameters will be used. The parameters can be changed using the ``cfg`` object (see the :py:class:`repype.config.Config` class API). The available hyperparameters are described in the documentation of the respective stages employed in the :ref:`pipeline <pipeline>`.
 
 The variable ``img`` must be a two-dimensional ``numpy.ndarray`` object which represents the raw image intensities. Images can be loaded from file using :py:meth:`~superdsm.io.imread`.
 
