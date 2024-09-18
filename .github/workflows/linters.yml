@@ -28,5 +28,6 @@ jobs:
     - name: Run linters
       run: |
         flake8 superdsm
+        flake8 tests
         isort superdsm --check-only --diff
         isort tests --check-only --diff
