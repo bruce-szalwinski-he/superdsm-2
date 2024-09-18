@@ -132,7 +132,7 @@ class DeformableShapeModel:
         """
         Creates a deformable shape model corresponding to an ellipse, possibly deformbed.
 
-        Attributes:
+        Arguments:
             ξ: The deformation parameters.
             center: The coordinates of the center of the ellipse.
             halfaxis1_len: The length of the first half axis.
@@ -258,8 +258,8 @@ class SmoothMatrixFactory:
         shape_multiplier: The Gaussian function with standard deviation :math:`\\sigma_G` used to construct the block
             Toeplitz matrix :math:`G_\\omega` is cut off after :math:`4 \\sigma_G` multiplied by this value (see
             :ref:`pipeline_theory_dsm`).
-        smooth_subsample: Corresponds to the amount of sub-sampling used (see Section 3.3 in
-            :ref:`Kostrykin and Rohr, TPAMI 2023 <references>`).
+        smooth_subsample: Corresponds to the amount of sub-sampling used (see Section 3.3 in :ref:`Kostrykin and Rohr,
+            TPAMI 2023 <references>`).
         lock: A critical section lock used for allocation of the matrix.
         dtype: The data type used for the matrix.
     """
@@ -315,17 +315,16 @@ class Energy:
     """
     Represents the convex energy function :math:`\\psi` for deformable shape models.
 
-    Instances of this class can be used as functions (e.g., ``energy(params)`` computes the value
-    :math:`\\psi_\\omega(\\theta, \\xi)` of the convex energy function :math:`\\psi` so that ``params[:6]`` corresponds
-    to the polynomial parameters :math:`\\theta` and ``params[6:]`` corresponds to the deformation parameters
-    :math:`\\xi`).
+    Instances of this class can be used as functions (e.g., ``energy(params)`` computes the value :math:`\\psi_\\omega
+    (\\theta, \\xi)` of the convex energy function :math:`\\psi` so that ``params[:6]`` corresponds to the polynomial
+    parameters :math:`\\theta` and ``params[6:]`` corresponds to the deformation parameters :math:`\\xi`).
 
     Arguments:
         roi: An image region represented by an instance of the :py:class:`~superdsm.image.Image` class.
         epsilon: Corresponds to the constant :math:`\\epsilon` which is used for the smooth approximation of the
-            regularization term
-            :math:`\\|\\xi\\|_1 \\approx \\mathbb 1^\\top_\\Omega \\sqrt{\\xi^2 + \\epsilon} - \\sqrt{\\epsilon} \\cdot \\#\\Omega`
-            (see Supplemental Material 2 of :ref:`Kostrykin and Rohr, TPAMI 2023 <references>`).
+            regularization term :math:`\\|\\xi\\|_1 \\approx \\mathbb 1^\\top_\\Omega \\sqrt{\\xi^2 + \\epsilon} -
+            \\sqrt{\\epsilon} \\cdot \\#\\Omega` (see Supplemental Material 2 of :ref:`Kostrykin and Rohr, TPAMI 2023
+            <references>`).
         alpha:
             Governs the regularization of the deformations and corresponds to :math:`\\alpha` described in
             :ref:`pipeline_theory_cvxprog`. Increasing this value leads to a smoother segmentation result.

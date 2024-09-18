@@ -56,20 +56,20 @@ class DSM_Config(repype.stage.Stage):
 
     ``dsm/smooth_subsample``
         Corresponds to the amount of sub-sampling used to obtain the matrix :math:`\\tilde G_\\omega` in
-        :ref:`Kostrykin and Rohr (TPAMI 2023 <references>`, Section 3.3). Defaults to 20, or to
-        ``AF_smooth_subsample × scale`` if computed automatically (forced to :math:`\\geq 8` and ``AF_smooth_subsample``
-        defaults to 0.4).
+        :ref:`Kostrykin and Rohr (TPAMI 2023 <references>`, Section 3.3). Defaults to 20, or to ``AF_smooth_subsample ×
+        scale`` if computed automatically (forced to :math:`\\geq 8` and ``AF_smooth_subsample`` defaults to 0.4).
 
     ``dsm/epsilon``
         Corresponds to the constant :math:`\\epsilon` which is used for the smooth approximation of the regularization
-        term :math:`\\|\\xi\\|_1 \\approx \\mathbb 1^\\top_\\Omega \\sqrt{\\xi^2 + \\epsilon} - \\sqrt{\\epsilon} \\cdot \\#\\Omega`
-        (see Supplemental Material 2 of :ref:`Kostrykin and Rohr, TPAMI 2023 <references>`). Defaults to 1.
+        term :math:`\\|\\xi\\|_1 \\approx \\mathbb 1^\\top_\\Omega \\sqrt{\\xi^2 + \\epsilon} - \\sqrt{\\epsilon}
+        \\cdot \\#\\Omega` (see Supplemental Material 2 of :ref:`Kostrykin and Rohr, TPAMI 2023 <references>`).
+        Defaults to 1.
 
     ``dsm/alpha``
         Governs the regularization of the deformations and corresponds to :math:`\\alpha` described in
         :ref:`pipeline_theory_cvxprog`. Increasing this value leads to a smoother segmentation result. Defaults to 0.5,
-        or to ``AF_alpha × scale^2`` if computed automatically (where ``AF_alpha`` corresponds to
-        :math:`\\alpha_\\text{factor}` in :ref:`Kostrykin and Rohr, TPAMI 2023 <references>`, and defaults to 5e-4).
+        or to ``AF_alpha × scale^2`` if computed automatically (where ``AF_alpha`` corresponds to :math:`\\alpha_\\text
+        {factor}` in :ref:`Kostrykin and Rohr, TPAMI 2023 <references>`, and defaults to 5e-4).
 
     ``dsm/scale``
         Fixed factor used during convex programming to slightly improve numerical stabilities. Defaults to 1000.
@@ -91,9 +91,9 @@ class DSM_Config(repype.stage.Stage):
         Governs the amount of image background included in the obtained image region. This is the width of the "stripe"
         of background retained around each connected foreground region (in pixels). See Supplemental Material 6 of
         :ref:`Kostrykin and Rohr (TPAMI 2023) <references>` for details, however, due to a transmission error, the
-        threshold :math:`\\sigma_G` in Eq. (S11) was misstated by a factor of 2 (the correct threshold is
-        :math:`2\\sigma_G`). Defaults to 20, or to ``AF_background_margin × scale`` if computed automatically (forced
-        to :math:`\\geq 8` and ``AF_background_margin`` defaults to 0.4).
+        threshold :math:`\\sigma_G` in Eq. (S11) was misstated by a factor of 2 (the correct threshold is :math:`2
+        \\sigma_G`). Defaults to 20, or to ``AF_background_margin × scale`` if computed automatically (forced to
+        :math:`\\geq 8` and ``AF_background_margin`` defaults to 0.4).
 
     ``dsm/cp_timeout``
         The maximum run time of convex programming for each object (in seconds). The convex optimization will be

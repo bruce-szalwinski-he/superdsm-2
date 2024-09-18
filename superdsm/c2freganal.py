@@ -118,29 +118,28 @@ class C2F_RegionAnalysis(repype.stage.Stage):
 
     ``c2f-region-analysis/min_atom_radius``
         No region determined by the :ref:`pipeline_theory_c2freganal` scheme is smaller than a circle of this radius
-        (in terms of the surface area). Corresponds to *min_region_radius* in
-        :ref:`Kostrykin and Rohr (TPAMI 2023, <references>` Supplemental Materials 5 and 8). Defaults to 15, or to
-        ``AF_min_atom_radius × radius`` if configured automatically (and ``AF_min_atom_radius`` defaults to 0.33).
+        (in terms of the surface area). Corresponds to *min_region_radius* in :ref:`Kostrykin and Rohr (TPAMI 2023,
+        <references>` Supplemental Materials 5 and 8). Defaults to 15, or to ``AF_min_atom_radius × radius`` if
+        configured automatically (and ``AF_min_atom_radius`` defaults to 0.33).
 
     ``c2f-region-analysis/max_atom_norm_energy``
         No atomic image region :math:`\\omega` determined by the :ref:`pipeline_theory_c2freganal` has a normalized
-        energy :math:`r(\\omega)` smaller than this value. Corresponds to *max_norm_energy1* in
-        :ref:`Kostrykin and Rohr (TPAMI 2023, <references>` Supplemental Materials 5 and 8). Defaults to 0.05.
+        energy :math:`r(\\omega)` smaller than this value. Corresponds to *max_norm_energy1* in :ref:`Kostrykin and
+        Rohr (TPAMI 2023, <references>` Supplemental Materials 5 and 8). Defaults to 0.05.
 
     ``c2f-region-analysis/min_norm_energy_improvement``
         Each split performed during the computation of the atomic image regions must improve the normalized energy
         :math:`r(\\omega)` of an image region :math:`\\omega` by at least this factor (see
-        :ref:`pipeline_theory_c2freganal`). Given that an image region is split into the sub-regions
-        :math:`\\omega_1, \\omega_2`, the improvement of the split is defined by the fraction
-        :math:`\\max\\{ r(\\omega_1), r(\\omega_1) \\} / r(\\omega_1 \\cup \\omega_2)`. Lower values of the fraction
-        correspond to better improvements. Defaults to 0.1.
+        :ref:`pipeline_theory_c2freganal`). Given that an image region is split into the sub-regions :math:`\\omega_1,
+        \\omega_2`, the improvement of the split is defined by the fraction :math:`\\max\\{ r(\\omega_1), r(\\omega_1)
+        \\} / r(\\omega_1 \\cup \\omega_2)`. Lower values of the fraction correspond to better improvements. Defaults
+        to 0.1.
 
     ``c2f-region-analysis/max_cluster_marker_irregularity``
         Threshold for the "irregularity" of image regions, which is used to determine the output ``y_mask``. Image
         regions with an "irregularity" higher than this value are masked as "empty" image regions and discarded from
-        further considerations. This is the threshold for the P/A ratio described in
-        :ref:`Kostrykin and Rohr (TPAMI 2023, <references>` see Section 3.1 and *max_pa_ratio* in Supplemental Material
-        8). Defaults to 0.2.
+        further considerations. This is the threshold for the P/A ratio described in :ref:`Kostrykin and Rohr (TPAMI
+        2023, <references>` see Section 3.1 and *max_pa_ratio* in Supplemental Material 8). Defaults to 0.2.
 
     .. note::
        This stage takes the DSM-related hyperparameters as an input. Due to a bug in the original implementation, the

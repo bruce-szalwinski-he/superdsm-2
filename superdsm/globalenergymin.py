@@ -34,14 +34,14 @@ class PerformanceReport:
     Reports the pruning performance of the global energy minimization method.
 
     Attributes:
-        direct_solution_trial_count: The number of cases in which Criterion 2 was evaluated (see
-            :ref:`Kostrykin and Rohr, TPAMI 2023 <references>`).
+        direct_solution_trial_count: The number of cases in which Criterion 2 was evaluated (see :ref:`Kostrykin and
+            Rohr, TPAMI 2023 <references>`).
         direct_solution_success_count: The number of cases in which Criterion 2 yielded a closed-form solution (see
             :ref:`Kostrykin and Rohr, TPAMI 2023 <references>`).
         iterative_object_count: The number of objects which would be computed if bruteforce was used instead of
             Algorithm 1.
-        iterative_computed_object_count: The number of objects computed by Algorithm 1 (see
-            :ref:`Kostrykin and Rohr, TPAMI 2023 <references>`).
+        iterative_computed_object_count: The number of objects computed by Algorithm 1 (see :ref:`Kostrykin and Rohr,
+            TPAMI 2023 <references>`).
         overall_object_count: The overall number of objects which would be computed if neither Algorithm 1 nor
             Criterion 2 was used.
         overall_computed_object_count: The overall number of computed objects.
@@ -146,8 +146,8 @@ class GlobalEnergyMinimization(repype.stage.Stage):
     ``cover``, ``objects``, ``performance`` for output. Refer to :ref:`pipeline_inputs_and_outputs` for more
     information on the available inputs and outputs.
 
-    For Algorithm 1, there are two behaviours implemented which differ in the definition of the upper bound
-    :math:`c_{\\text{max}}`. In *exact* pruning mode, the original definition from the paper is used,
+    For Algorithm 1, there are two behaviours implemented which differ in the definition of the upper bound :math:`c_{
+    \\text{max}}`. In *exact* pruning mode, the original definition from the paper is used,
 
     .. math:: c_{\\text{max}} = \\operatorname{MSC}(\\mathscr U) - \\sum_{u \\in U \\setminus X} \\nu(\\{u\\}),
 
@@ -173,14 +173,14 @@ class GlobalEnergyMinimization(repype.stage.Stage):
 
     ``global-energy-minimization/max_iter``
         The number of iterations to perform for solving the *min-weight set-cover* (see
-        :py:meth:`~superdsm.minsetcover.solve_minsetcover` and Algorithm 2 in
-        :ref:`Kostrykin and Rohr, TPAMI 2023 <references>`). Iterations use an increasingly conservative merging
-        strategy (i.e. the sparsity parameter :math:`\\beta` is reduced). Defaults to 5.
+        :py:meth:`~superdsm.minsetcover.solve_minsetcover` and Algorithm 2 in :ref:`Kostrykin and Rohr, TPAMI 2023
+        <references>`). Iterations use an increasingly conservative merging strategy (i.e. the sparsity parameter
+        :math:`\\beta` is reduced). Defaults to 5.
 
     ``global-energy-minimization/gamma``
         The factor used to reduce the sparsity parameter :math:`\\beta` after the first iteration (this is the
-        parameter :math:`\\gamma` of Algorithm 2 in :ref:`Kostrykin and Rohr, TPAMI 2023 <references>`, where
-        :math:`0 < \\gamma < 1`). Defaults to 0.8.
+        parameter :math:`\\gamma` of Algorithm 2 in :ref:`Kostrykin and Rohr, TPAMI 2023 <references>`, where :math:`0
+        < \\gamma < 1`). Defaults to 0.8.
 
     ``global-energy-minimization/max_seed_distance``
         Maximum distance allowed between two seed points of atomic image regions which are grouped into an image region

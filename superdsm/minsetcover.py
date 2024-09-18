@@ -116,8 +116,8 @@ class MinSetCover:
        + \\nu(X) \\enspace\\text{s.t. } \\bigcup \\mathscr S = \\bigcup \\mathscr X,
 
     where the sparse minimal-energy family :math:`\\mathscr X` is a *min-weight set-cover*. See
-    :ref:`pipeline_theory_jointsegandclustersplit` and Section 2.3.2 in :ref:`Kostrykin and Rohr (TPAMI 2023) <references>`
-    for details.
+    :ref:`pipeline_theory_jointsegandclustersplit` and Section 2.3.2 in :ref:`Kostrykin and Rohr (TPAMI 2023)
+    <references>` for details.
 
     The family of candidate sets :math:`\\mathscr S` initially contains sets of cardinality :math:`\\# X = 1`. Further
     object prototypes (i.e. sets of atomic image regions) are added to :math:`\\mathscr S` by the :py:meth:`~.update`
