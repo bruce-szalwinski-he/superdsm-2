@@ -20,7 +20,7 @@ setup(
     python_requires='>=3.11',
     install_requires=[
         'numpy>=1.26,<2',
-        'scipy>=1.13.1,<2',
+        'scipy>=1.13.1,<1.14',  # https://github.com/BMCV/SuperDSM/pull/20#issuecomment-2330922474
         'scikit-image>=0.24.0',
         'ipython>=7.31.1',
         'dill>=0.3.2',
