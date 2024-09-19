@@ -1,0 +1,6 @@
+config:
+  dsm:
+    alpha: 0.2
+  postprocess:
+    max_norm_energy: 0.5
+    min_contrast: 1.45

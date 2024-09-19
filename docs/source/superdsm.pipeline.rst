@@ -2,6 +2,6 @@ superdsm.pipeline
 =================
 
 .. automodule:: superdsm.pipeline
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -2,6 +2,6 @@ superdsm.maxsetpack
 ===================
 
 .. automodule:: superdsm.maxsetpack
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :undoc-members:
+   :show-inheritance:

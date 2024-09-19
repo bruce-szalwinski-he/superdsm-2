@@ -2,6 +2,6 @@ superdsm.globalenergymin
 ========================
 
 .. automodule:: superdsm.globalenergymin
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :undoc-members:
+   :show-inheritance:

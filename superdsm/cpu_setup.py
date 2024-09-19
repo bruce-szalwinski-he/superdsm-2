@@ -11,7 +11,7 @@ try:
     elif 'GenuineIntel' in vendor_info:
         cpu_vendor = 'intel'
 
-except:
+except:  # noqa: E722
     pass
 
 

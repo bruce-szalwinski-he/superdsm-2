@@ -1,18 +1,20 @@
+import json
 import os
 import pathlib
-import requests
-import tempfile
 import shutil
-import json
+import tempfile
 import warnings
+
 import numpy as np
+import requests
+
 import superdsm.io
-import superdsm.output
 
 requests.packages.urllib3.disable_warnings()
 
 root_dir = pathlib.Path(os.path.realpath(__file__)).parent
 data_dir = root_dir / 'data'
+
 
 def load_data(url, datasets, **kwargs):
     archive_suffix = ''.join(pathlib.Path(url).suffixes)
@@ -33,6 +35,7 @@ def load_data(url, datasets, **kwargs):
                 dst.parent.mkdir(parents=True, exist_ok=True)
                 shutil.move(str(src_root / src), str(dst))
 
+
 def require_data(data_id, filename=None):
     data_path = data_dir / data_id
     if not data_path.exists():
@@ -51,7 +54,7 @@ def get_log_root_dir(filepath):
 
 def normalize_image(img):
     if str(img.dtype).startswith('float'):
-        img = (img - img.min()) / (img.max() - img.min()) 
+        img = (img - img.min()) / (img.max() - img.min())
         img = (img * 255).round().astype('uint8')
     return img
 
@@ -59,11 +62,11 @@ def normalize_image(img):
 def validate_image(test, name, img):
     try:
         expected = superdsm.io.imread(str(root_dir / 'expected' / name), as_gray=False)
-        img = normalize_image(img) ## processes the image as if it was written to a file and read back
+        img = normalize_image(img)  # processes the image as if it was written to a file and read back
         test.assertEqual(img.shape, expected.shape)
         msg = f'Maximum absolute difference: {np.abs(img - expected).max():g}'
         test.assertTrue(np.allclose(img, expected), msg)
-    except:
+    except:  # noqa: E722
         actual_path = root_dir / 'actual' / name
         actual_path.parent.mkdir(parents=True, exist_ok=True)
         superdsm.io.imsave(str(actual_path), img)
@@ -76,62 +79,3 @@ def without_resource_warnings(test_func):
             warnings.simplefilter('ignore', ResourceWarning)
             test_func(self, *args, **kwargs)
     return do_test
-
-
-class DeferredOutput(superdsm.output.Output):
-
-    def __init__(self, original, muted=False, parent=None, margin=0):
-        super(DeferredOutput, self).__init__(parent, muted, margin)
-        assert parent is None or isinstance(parent, DeferredOutput)
-        self.original = original
-        if parent is None:
-            self._intermediate = None
-            self._lines = list()
-
-    @property
-    def _root(self):
-        if self.parent is None: return self
-        else: return self.parent._find_root()
-
-    def intermediate(self, line):
-        if not self.muted:
-            self._root._intermediate = ' ' * self.margin + line
-    
-    def write(self, line):
-        if not self.muted:
-            self._root._intermediate = None
-            self._root._lines.append(' ' * self.margin + line)
-    
-    def derive(self, muted=False, margin=0):
-        assert margin >= 0
-        return DeferredOutput(self.original, muted, self, self.margin + margin)
-    
-    def forward(self):
-        assert self.parent is None
-        for line in self._lines:
-            self.original.write(line)
-        if self._intermediate is not None:
-            self.original.write(self._intermediate)
-
-    def write_to_file(self, file):
-        if hasattr(file, 'write'):
-            file.write('\n'.join(self._lines))
-        else:
-            with open(str(file), 'w') as fout:
-                self.write_to_file(fout)
-
-
-class SilentOutputContext:
-
-    def __init__(self, out=None, **kwargs):
-        out = superdsm.output.get_output(out)
-        self.output = DeferredOutput(out, **kwargs)
-        self.output.write('')
-
-    def __enter__(self):
-        return self.output
-    
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if exc_type is not None:
-            self.output.forward()
-    

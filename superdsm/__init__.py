@@ -1,11 +1,15 @@
 from . import cpu_setup
+from .version import (
+    VERSION,
+    VERSION_MAJOR,
+    VERSION_MINOR,
+    VERSION_PATCH,
+)
 
-from .version import *
 __version__ = VERSION
 
-# By-pass this bug: https://github.com/flatironinstitute/sparse_dot/issues/7
-from . import _mkl
+from repype.config import Config
 
-from . import pipeline
-from . import config
-
+from . import \
+    _mkl  # by-pass this bug: https://github.com/flatironinstitute/sparse_dot/issues/7
+from .pipeline import Pipeline

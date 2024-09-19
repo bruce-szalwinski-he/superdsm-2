@@ -1,12 +1,12 @@
-import sys
 import argparse
+import csv
 import glob
 import pathlib
-import skimage.io
-import csv
-import scipy.ndimage as ndi
 import shutil
+import sys
 
+import scipy.ndimage as ndi
+import skimage.io
 
 parser = argparse.ArgumentParser(prog='Regression testing')
 
@@ -30,14 +30,14 @@ for filepath in glob.glob(str(actual_seg_path / '*.png')):
 
     img = skimage.io.imread(str(actual_seg_filepath))
     actual_csv_rows = list()
-    for l in frozenset(img.flatten()) - {0}:
+    for l in frozenset(img.flatten()) - {0}:  # noqa: E741
         cc = (img == l)
         cc_center_rc = ndi.center_of_mass(cc)
         actual_csv_rows.append((str(cc.sum()), str(round(cc_center_rc[1], 1)), str(round(cc_center_rc[0], 1))))
 
-    actual_csv_rows.sort(key = lambda row: row[1:3])
+    actual_csv_rows.sort(key=lambda row: row[1:3])
     with actual_csv_filepath.open('w') as fp:
-        writer = csv.writer(fp, delimiter = ',', quoting = csv.QUOTE_ALL)
+        writer = csv.writer(fp, delimiter=',', quoting=csv.QUOTE_ALL)
         writer.writerows([['Object size', 'Center X', 'Center Y']] + actual_csv_rows)
 
     actual_csv_rows_by_filename[actual_seg_filepath.name] = frozenset(actual_csv_rows)
@@ -67,9 +67,10 @@ for filepath in glob.glob(str(expected_csv_path / '*.csv')):
 
     expected_csv_rows = list()
     with expected_csv_filepath.open('r') as fp:
-        reader = csv.reader(fp, delimiter = ',', quoting = csv.QUOTE_ALL)
+        reader = csv.reader(fp, delimiter=',', quoting=csv.QUOTE_ALL)
         for ridx, row in enumerate(reader):
-            if ridx == 0: continue  ## skip header
+            if ridx == 0:
+                continue  # skip header
             expected_csv_rows.append(tuple(row))
 
     expected_csv_rows = frozenset(expected_csv_rows)
@@ -77,14 +78,17 @@ for filepath in glob.glob(str(expected_csv_path / '*.csv')):
     spurious_rows = actual_csv_rows - expected_csv_rows
 
     if len(spurious_rows) > 0 or len(missing_rows) > 0:
-        errors.append(f'{actual_seg_filename}: {len(spurious_rows)} spurious object(s) and {len(missing_rows)} missing object(s) cannot be matched')
+        errors.append(
+            f'{actual_seg_filename}: {len(spurious_rows)} spurious object(s) '
+            f'and {len(missing_rows)} missing object(s) cannot be matched'
+        )
 
 
 for remaining_filename in actual_csv_rows_by_filename.keys():
     errors.append(f'Spurious label map: "{remaining_filename}"')
 
 
-if 'img' not in locals():  ## an additional error check to prevent passing tests due to wrongs paths
+if 'img' not in locals():  # an additional error check to prevent passing tests due to wrongs paths
     errors.append('No label maps found')
 
 if len(errors) == 0:

@@ -1,26 +1,25 @@
 import unittest
-import numpy as np
-import superdsm.atoms
 
-from . import testsuite
+import numpy as np
+
+import superdsm.atoms
 
 
 class atoms(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        with testsuite.SilentOutputContext() as out:
-            self.atoms = np.array([[1, 1, 2, 4],
-                                   [1, 3, 2, 4],
-                                   [3, 3, 3, 4]])
-            self.clusters = np.array([[1, 1, 2, 2],
-                                      [1, 2, 2, 2],
-                                      [2, 2, 2, 2]])
-            self.fg_mask = np.array([[True, False, True, False],
-                                     [True, False, True,  True],
-                                     [True,  True, True,  True]])
-            self.seeds = [(0, 0), (0, 2), (2, 1), (1, 3)]
-            self.adj = superdsm.atoms.AtomAdjacencyGraph(self.atoms, self.clusters, self.fg_mask, self.seeds, out=out)
+        self.atoms = np.array([[1, 1, 2, 4],
+                               [1, 3, 2, 4],
+                               [3, 3, 3, 4]])
+        self.clusters = np.array([[1, 1, 2, 2],
+                                  [1, 2, 2, 2],
+                                  [2, 2, 2, 2]])
+        self.fg_mask = np.array([[True, False, True, False],
+                                 [True, False, True,  True],
+                                 [True,  True, True,  True]])
+        self.seeds = [(0, 0), (0, 2), (2, 1), (1, 3)]
+        self.adj = superdsm.atoms.AtomAdjacencyGraph(self.atoms, self.clusters, self.fg_mask, self.seeds, status=None)
 
     def test_AtomAdjacencyGraph(self):
         self.assertEqual(self.adj[1], set( ))
@@ -56,8 +55,7 @@ class atoms(unittest.TestCase):
         self.assertEqual(self.adj.get_edge_lines(lambda i: i != 4, reduce=False), [((0, 2), (2, 1)), ((2, 1), (0, 2))])
 
     def test_AtomAdjacencyGraph_get_seed(self):
-        with testsuite.SilentOutputContext() as out:
-            adj2 = superdsm.atoms.AtomAdjacencyGraph(self.atoms, self.clusters, self.fg_mask, self.seeds[::-1], out=out)
+        adj2 = superdsm.atoms.AtomAdjacencyGraph(self.atoms, self.clusters, self.fg_mask, self.seeds[::-1], status=None)
         for adj in (self.adj, adj2):
             self.assertEqual(adj.get_seed(1), (0, 0))
             self.assertEqual(adj.get_seed(2), (0, 2))

@@ -1,9 +1,9 @@
 import unittest
-import numpy as np
-import superdsm.objects
-import superdsm.image
 
-from . import testsuite
+import numpy as np
+
+import superdsm.image
+import superdsm.objects
 
 
 class objects(unittest.TestCase):
