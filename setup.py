@@ -30,6 +30,6 @@ setup(
         'matplotlib>=3.0',
         'mkl>=2020.0',
         'imagecodecs>=2024.6.1',
-        'repype==1.0.0,<1.1',
+        'repype>=1.0.0,<1.1',
     ],
 )
