@@ -1,9 +1,10 @@
+# This file is part of the superdsm project.
 name: Test suite
 
 on:
   workflow_dispatch:
   pull_request:
-    branches: ['develop', 'master']
+    branches: ['main']
     paths:
       - '.github/workflows/testsuite.yml'
       - 'superdsm/**'
