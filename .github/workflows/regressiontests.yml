@@ -42,7 +42,7 @@ jobs:
         run: rm -rf /github/home/conda_pkgs_dir
 
       - name: Setup Miniconda
-        uses: conda-incubator/setup-miniconda@v2
+        uses: conda-incubator/setup-miniconda@v3
         with:
           miniconda-version: 'latest'
           channels: conda-forge, bioconda, defaults
