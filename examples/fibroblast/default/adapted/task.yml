@@ -1,4 +1,0 @@
-config:
-  AF_scale: 80
-  postprocess:
-    min_contrast: 1.8

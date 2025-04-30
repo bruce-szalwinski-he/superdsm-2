@@ -1,0 +1,20 @@
+name: thing 3 job
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: ['main']
+    paths:
+      - '.github/workflows/thing3.yml'
+      - 'thing3/**'
+
+jobs:
+
+  run_testsuite:
+    name: Thing3
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v2
