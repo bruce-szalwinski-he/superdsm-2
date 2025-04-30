@@ -1,3 +1,4 @@
+# This workflow runs the test suite for SuperDSM.
 name: Test suite
 
 on:
