@@ -25,9 +25,15 @@ jobs:
       image: ubuntu:22.04
 
     steps:
+
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y ca-certificates
     
       - name: Wait for test suite
         uses: blend/require-conditional-status-checks@2022.02.04
+        if: ${{ (github.event.action == 'synchronize' || github.event.action == 'opened') && github.event.pull_request.draft == true }}
         with:
           interval: 20s
           timeout: 1440m
@@ -39,4 +45,3 @@ jobs:
                 - examples/**
                 - superdsm.yml
                 - tests/**
-  
