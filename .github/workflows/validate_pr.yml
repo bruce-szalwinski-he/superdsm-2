@@ -5,18 +5,6 @@ on:
 
 jobs:
 
-  validate_branches:
-    name: Validate branches
-    runs-on: ubuntu-latest
-
-    steps:
-
-      - name: Validate branches
-        if: github.base_ref == 'master' && github.head_ref != 'develop'
-        run: |
-          echo "Contributions should be made against the develop branch, see README.rst."
-          exit 1
-
   validate_conditional_checks:
     name: Validate conditional checks
     timeout-minutes: 1440
@@ -37,10 +25,15 @@ jobs:
           interval: 20s
           timeout: 1440m
           checks-yaml: |
-            - job: 'Test suite'
+            - job: 'Thing1'
               paths:
-                - .github/workflows/testsuite.yml
-                - superdsm/**
-                - examples/**
-                - superdsm.yml
-                - tests/**
+                - .github/workflows/thing1.yml
+                - thing1/**
+            - job: 'Thing2'
+              paths:
+                - .github/workflows/thing2.yml
+                - thing2/**
+            - job: 'Thing3'
+              paths:
+                - .github/workflows/thing3.yml
+                - thing3/**

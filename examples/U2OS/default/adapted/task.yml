@@ -1,8 +1,0 @@
-config:
-  global-energy-minimization:
-    AF_beta: 0.3
-  dsm:
-    AF_alpha: 7.5e-5
-  postprocess:
-    mask_max_distance: 2
-    mask_stdamp: 3
